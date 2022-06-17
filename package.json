@@ -43,7 +43,7 @@
     "cm": "cz",
     "coverage": "codecov",
     "dev": "tsc --watch",
-    "lint": "eslint src --ext .js,.ts --fix",
+    "lint": "eslint src --ext .ts --fix",
     "prepare": "husky install",
     "semantic-release": "semantic-release",
     "test:watch": "jest --watch",
@@ -51,12 +51,7 @@
     "typecheck": "tsc --noEmit"
   },
   "lint-staged": {
-    "*.ts": "eslint --cache --cache-location .eslintcache --fix"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint"
-    }
+    "*.ts": "eslint src --ext .ts --fix"
   },
   "config": {
     "commitizen": {
