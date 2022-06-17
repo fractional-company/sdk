@@ -1,1 +1,1 @@
-export * from './constants/chains';
+export * from './v2';

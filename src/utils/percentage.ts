@@ -11,10 +11,8 @@ export const get2DayChange = (
 ): [number, number] => {
   // get volume info for both 24 hour periods
   const currentChange = parseFloat(valueNow) - parseFloat(value24HoursAgo);
-  const previousChange =
-    parseFloat(value24HoursAgo) - parseFloat(value48HoursAgo);
-  const adjustedPercentChange =
-    ((currentChange - previousChange) / previousChange) * 100;
+  const previousChange = parseFloat(value24HoursAgo) - parseFloat(value48HoursAgo);
+  const adjustedPercentChange = ((currentChange - previousChange) / previousChange) * 100;
   if (isNaN(adjustedPercentChange) || !isFinite(adjustedPercentChange)) {
     return [currentChange, 0];
   }
@@ -32,9 +30,7 @@ export const getPercentChange = (
 ): number => {
   if (valueNow && value24HoursAgo) {
     const change =
-      ((parseFloat(valueNow) - parseFloat(value24HoursAgo)) /
-        parseFloat(value24HoursAgo)) *
-      100;
+      ((parseFloat(valueNow) - parseFloat(value24HoursAgo)) / parseFloat(value24HoursAgo)) * 100;
     if (isFinite(change)) return change;
   }
   return 0;
