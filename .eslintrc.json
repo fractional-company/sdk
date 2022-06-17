@@ -2,8 +2,8 @@
   "root": true,
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.json",
-    "sourceType": "module"
+    "project": "typescript.eslintrc.json",
+    "ecmaVersion": 6
   },
   "plugins": ["@typescript-eslint", "prettier"],
   "extends": [
@@ -14,12 +14,21 @@
     "plugin:prettier/recommended"
   ],
   "rules": {
-    // "prettier/prettier": "warn",
-    // "@typescript-eslint/no-use-before-define": "off",
-    // "@typescript-eslint/no-unsafe-assignment": "off",
-    // "@typescript-eslint/no-var-requires": "off",
-    // "@typescript-eslint/ban-ts-comment": "off",
-    // "@typescript-eslint/no-explicit-any": "off",
-    // "@typescript-eslint/no-unsafe-call": "warn"
-  }
+    "prettier/prettier": "warn",
+    "no-console": "warn",
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-var-requires": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unsafe-call": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["test/**/*.ts"],
+      "env": {
+        "jest": true
+      }
+    }
+  ]
 }

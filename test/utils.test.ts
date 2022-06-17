@@ -23,9 +23,3 @@ describe('percentage utils', () => {
     expect(changes).toEqual([-40, -0]);
   });
 });
-
-describe('fail', () => {
-  it('should fail', () => {
-    expect(true).toBe(false);
-  });
-});
