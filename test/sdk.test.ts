@@ -1,5 +1,5 @@
 describe('Blocks integration tests', () => {
-  it('should return nearest block by timestamp', () => {
+  it('should test the sdk', () => {
     // todo: implement
   });
 });

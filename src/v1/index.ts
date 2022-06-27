@@ -1,1 +1,2 @@
-export * from './components/vault';
+export * from './components';
+export * from './utilities';
