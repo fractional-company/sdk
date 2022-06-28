@@ -2,7 +2,8 @@
 import { Signer, Contract, BigNumberish } from 'ethers';
 import { parseEther } from 'ethers/lib/utils';
 import { isAddress } from '@ethersproject/address';
-import { Provider } from '@ethersproject/abstract-provider';
+import { isValidChain } from '../utilities';
+import { VaultConfig, FactoryItem } from '../types/types';
 import {
   getFactoryContractsMappedForChain,
   TYPE_VAULT_FACTORY,
@@ -10,57 +11,26 @@ import {
   SCHEMA_ERC20
 } from '@fractional-company/common';
 
-interface VaultConfig {
-  provider: Provider;
-  signer: Signer;
-  chainId: number;
-  address: string;
-  factoryAddress: string;
-}
-
-interface VaultFactory {
-  abi: any;
-  contractAddress: string;
-  vault: {
-    fractionSchema: string;
-    abi: any;
-  };
-}
-
 export class Vault {
   public isReadOnly: boolean;
   public address: string;
   public fractionSchema: string;
   private vault: Contract;
 
-  constructor({ address, factoryAddress, chainId, provider, signer }: VaultConfig) {
+  constructor({ address, factoryAddress, chainId, signerOrProvider }: VaultConfig) {
     if (!isAddress(address)) throw new Error('Vault address is not valid');
     if (!isAddress(factoryAddress)) throw new Error('Factory address is not valid');
-    if (typeof chainId !== 'number') throw new Error('Chain ID is not valid');
+    if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
 
-    if (!provider && !signer) throw new Error('Provider or signer is required');
-    if (provider && !Provider.isProvider(provider)) throw new Error('Provider is not a valid');
-    if (signer && !Signer.isSigner(signer)) throw new Error('Signer is not a valid');
+    const factories: FactoryItem[] = getFactoryContractsMappedForChain(chainId)[TYPE_VAULT_FACTORY];
+    const factory = factories.find((factory) => factory.contractAddress === factoryAddress);
+    if (!factory) throw new Error(`Vault factory contract ${factoryAddress} does not exist`);
 
-    if (Signer.isSigner(signer)) {
-      this.isReadOnly = false;
-    } else {
-      this.isReadOnly = true;
-    }
-
-    const vaultFactories: VaultFactory[] | undefined =
-      getFactoryContractsMappedForChain(chainId)[TYPE_VAULT_FACTORY];
-    if (!vaultFactories) throw new Error(`Chain is not supported`);
-
-    const vaultFactory = vaultFactories.find(
-      (factory: VaultFactory) => factory.contractAddress === factoryAddress
-    );
-    if (!vaultFactory) throw new Error(`Vault factory contract ${factoryAddress} does not exist`);
-
-    const { abi, fractionSchema } = vaultFactory.vault;
-    this.vault = new Contract(address, abi, signer || provider);
+    const { abi, fractionSchema } = factory.vault;
     this.address = address;
     this.fractionSchema = fractionSchema;
+    this.isReadOnly = !Signer.isSigner(signerOrProvider);
+    this.vault = new Contract(address, abi, signerOrProvider);
   }
 
   public async allowance(owner: string, spender: string): Promise<BigNumberish> {
