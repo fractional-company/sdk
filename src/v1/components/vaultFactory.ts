@@ -82,7 +82,12 @@ export class VaultFactory {
       args = [token, id, amount];
     }
 
-    const tx: Transaction = await this.vaultFactory.mint(...args);
+    const gasEstimate = await this.vaultFactory.estimateGas.mint(...args);
+    const gasLimit = gasEstimate.mul(110).div(100);
+
+    const tx: Transaction = await this.vaultFactory.mint(...args, {
+      gasLimit
+    });
     return tx;
   }
 }

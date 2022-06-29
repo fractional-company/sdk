@@ -27,6 +27,7 @@ export interface FactoryConfig {
 export interface FactoryItem {
   abi: any;
   contractAddress: string;
+  block: number;
   vault: {
     fractionSchema: string;
     abi: any;
