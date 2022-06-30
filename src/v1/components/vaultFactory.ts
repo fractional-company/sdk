@@ -1,10 +1,9 @@
 /* eslint-disable */
-import { Signer, Contract, Transaction } from 'ethers';
-import { Provider } from '@ethersproject/abstract-provider';
+import { Signer, Contract } from 'ethers';
+import { TransactionResponse, TransactionReceipt } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
 import { isValidFractionSchema, isValidChain } from '../utilities';
-import { FactoryItem, FactoryConfig, VaultData } from '../types/types';
-import erc721Abi from '../abis/erc721.json';
+import { FactoryItem, FactoryConfig, VaultData, VaultMintResponse } from '../types/types';
 import {
   getVaultItem,
   getLatestVaultItem,
@@ -17,8 +16,6 @@ export class VaultFactory {
   public fractionSchema: string;
   public address: string;
   public isReadOnly: boolean;
-  private abi: any;
-  private signerOrProvider: Signer | Provider;
   private vaultFactory: Contract;
 
   constructor({
@@ -42,22 +39,10 @@ export class VaultFactory {
       factory = getLatestVaultItem(chainId, fractionSchema?.toUpperCase());
     }
 
-    this.abi = factory.abi;
-    this.address = factory.contractAddress;
-    this.fractionSchema = factory.vault.fractionSchema;
-
+    this.vaultFactory = new Contract(factory.contractAddress, factory.abi, signerOrProvider);
     this.isReadOnly = !Signer.isSigner(signerOrProvider);
-    this.signerOrProvider = signerOrProvider;
-    this.vaultFactory = new Contract(this.address, this.abi, this.signerOrProvider);
-  }
-
-  public async setApproval(nftContractAddress: string): Promise<Transaction> {
-    if (this.isReadOnly) throw new Error('Signer is required to set approval');
-    if (!isAddress(nftContractAddress)) throw new Error('NFT contract address is not valid');
-
-    const nftContract = new Contract(nftContractAddress, erc721Abi, this.signerOrProvider);
-    const tx: Transaction = await nftContract.setApprovalForAll(this.address, true);
-    return tx;
+    this.fractionSchema = factory.vault.fractionSchema;
+    this.address = factory.contractAddress;
   }
 
   public async mint({
@@ -68,12 +53,12 @@ export class VaultFactory {
     amount,
     listPrice,
     fee
-  }: VaultData): Promise<Transaction> {
+  }: VaultData): Promise<VaultMintResponse> {
     if (this.isReadOnly) throw new Error('Signer is required to mint a vault');
 
     if (!amount) throw new Error('Supply is required');
     if (!token) throw new Error('Token is required');
-    if (!id) throw new Error('Id is required');
+    if (id === undefined || id === null) throw new Error('Id is required');
 
     if (this.fractionSchema === SCHEMA_ERC20 && !symbol) throw new Error('Symbol is required');
     if (this.fractionSchema === SCHEMA_ERC20 && !name) throw new Error('Name is required');
@@ -91,9 +76,16 @@ export class VaultFactory {
     const gasEstimate = await this.vaultFactory.estimateGas.mint(...args);
     const gasLimit = gasEstimate.mul(110).div(100);
 
-    const tx: Transaction = await this.vaultFactory.mint(...args, {
+    const tx: TransactionResponse = await this.vaultFactory.mint(...args, {
       gasLimit
     });
-    return tx;
+
+    const txReceipt: TransactionReceipt = await tx.wait();
+    if (!txReceipt || !txReceipt.status) throw new Error(`Transaction ${tx.hash} failed`);
+
+    const vaultAddress = txReceipt.logs[0].address;
+    return {
+      vaultAddress
+    };
   }
 }

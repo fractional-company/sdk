@@ -1,8 +1,6 @@
 /* eslint-disable */
 import { Signer, Contract, BigNumberish, Transaction } from 'ethers';
-import { parseEther } from 'ethers/lib/utils';
 import { isAddress } from '@ethersproject/address';
-import { daysToSeconds } from '../helpers/dates';
 import { isValidChain } from '../utilities';
 import { VaultConfig, FactoryItem } from '../types/types';
 import {
@@ -212,14 +210,13 @@ export class Vault {
     return await this.vault.underlyingID();
   }
 
-  public async updateAuctionLength(days: number): Promise<Transaction> {
+  public async updateAuctionLength(seconds: number): Promise<Transaction> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
 
-    if (typeof days !== 'number') throw new Error('Days must be a number');
-    if (days < 0) throw new Error('Days must be greater than 0');
+    if (typeof seconds !== 'number') throw new Error('Seconds must be a number');
+    if (seconds < 0) throw new Error('Seconds must be greater than 0');
 
-    const seconds = daysToSeconds(days);
     const gasEstimate = await this.vault.estimateGas.updateAuctionLength(seconds);
     const gasLimit = gasEstimate.mul(110).div(100);
     return await this.vault.updateAuctionLength(seconds, {

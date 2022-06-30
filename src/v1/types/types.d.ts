@@ -1,6 +1,7 @@
 import { Signer } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
 
+// Vault
 export interface VaultConfig {
   signerOrProvider: Signer | Provider;
   chainId: number | string;
@@ -17,6 +18,11 @@ export interface VaultData {
   symbol?: string;
 }
 
+export interface VaultMintResponse {
+  vaultAddress: string;
+}
+
+// Vault Factory
 export interface FactoryConfig {
   signerOrProvider: Signer | Provider;
   chainId: number | string;
@@ -32,4 +38,33 @@ export interface FactoryItem {
     fractionSchema: string;
     abi: any;
   };
+}
+
+// Basket Factory
+export interface BasketFactoryConfig {
+  signerOrProvider: Signer | Provider;
+  chainId: number | string;
+  address?: string;
+}
+
+export interface BasketFactoryItem {
+  abi: any;
+  contractAddress: string;
+  blockNumber: number;
+  basket: {
+    abi: any;
+  };
+}
+
+// Basket
+export interface Basket {
+  address: string;
+  tokenId: BigNumberish;
+}
+
+// ERC721
+export interface ERC721Config {
+  address: string;
+  signerOrProvider: Signer | Provider;
+  chainId: number | string;
 }
