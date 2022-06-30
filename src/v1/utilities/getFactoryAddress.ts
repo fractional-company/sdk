@@ -4,12 +4,16 @@ import { Provider } from '@ethersproject/abstract-provider';
 import { isAddress } from '@ethersproject/address';
 import { isValidChain } from './isValidChain';
 import { FactoryItem } from '../types/types';
-import { getFactoryContractsMappedForChain, TYPE_VAULT_FACTORY } from '@fractional-company/common';
+import {
+  getFactoryContractsMappedForChain,
+  TYPE_VAULT_FACTORY,
+  CHAINS
+} from '@fractional-company/common';
 
 export async function getFactoryAddress(
   vaultAddress: string,
-  chainId: number | string,
-  signerOrProvider: Signer | Provider
+  signerOrProvider: Signer | Provider,
+  chainId: number | string = CHAINS.MAINNET
 ): Promise<string> {
   if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
   if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');

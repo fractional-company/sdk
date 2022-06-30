@@ -9,7 +9,8 @@ import {
   getFactoryContractsMappedForChain,
   TYPE_VAULT_FACTORY,
   SCHEMA_ERC1155,
-  SCHEMA_ERC20
+  SCHEMA_ERC20,
+  CHAINS
 } from '@fractional-company/common';
 
 export class Vault {
@@ -18,7 +19,12 @@ export class Vault {
   public fractionSchema: string;
   private vault: Contract;
 
-  constructor({ address, factoryAddress, chainId, signerOrProvider }: VaultConfig) {
+  constructor({
+    address,
+    factoryAddress,
+    signerOrProvider,
+    chainId = CHAINS.MAINNET
+  }: VaultConfig) {
     if (!isAddress(address)) throw new Error('Vault address is not valid');
     if (!isAddress(factoryAddress)) throw new Error('Factory address is not valid');
     if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
