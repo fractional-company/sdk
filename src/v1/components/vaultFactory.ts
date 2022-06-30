@@ -4,7 +4,7 @@ import { Provider } from '@ethersproject/abstract-provider';
 import { isAddress } from '@ethersproject/address';
 import { isValidFractionSchema, isValidChain } from '../utilities';
 import { FactoryItem, FactoryConfig, VaultData } from '../types/types';
-import nftAbi from '../abis/nft.json';
+import erc721Abi from '../abis/erc721.json';
 import {
   getVaultItem,
   getLatestVaultItem,
@@ -49,7 +49,7 @@ export class VaultFactory {
     if (this.isReadOnly) throw new Error('Signer is required to set approval');
     if (!isAddress(nftContractAddress)) throw new Error('NFT contract address is not valid');
 
-    const nftContract = new Contract(nftContractAddress, nftAbi, this.signerOrProvider);
+    const nftContract = new Contract(nftContractAddress, erc721Abi, this.signerOrProvider);
     const tx: Transaction = await nftContract.setApprovalForAll(this.address, true);
     return tx;
   }
