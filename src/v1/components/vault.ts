@@ -1,5 +1,6 @@
 /* eslint-disable */
-import { Signer, Contract, BigNumberish, Transaction } from 'ethers';
+import { Signer, Contract, BigNumberish } from 'ethers';
+import { TransactionResponse } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
 import { isValidChain } from '../utilities';
 import { VaultConfig, FactoryItem } from '../types/types';
@@ -38,12 +39,12 @@ export class Vault {
     this.vault = new Contract(address, abi, signerOrProvider);
   }
 
-  public async allowance(owner: string, spender: string): Promise<BigNumberish> {
+  public allowance(owner: string, spender: string): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.allowance(owner, spender);
+    return this.vault.allowance(owner, spender);
   }
 
-  public async approve(spender: string, amount: BigNumberish): Promise<Transaction> {
+  public async approve(spender: string, amount: BigNumberish): Promise<TransactionResponse> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
 
@@ -54,25 +55,25 @@ export class Vault {
     });
   }
 
-  public async auctionEnd(): Promise<BigNumberish> {
-    return await this.vault.auctionEnd();
+  public auctionEnd(): Promise<BigNumberish> {
+    return this.vault.auctionEnd();
   }
 
-  public async auctionLength(): Promise<BigNumberish> {
+  public auctionLength(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.auctionLength();
+    return this.vault.auctionLength();
   }
 
-  public async auctionState(): Promise<BigNumberish> {
+  public auctionState(): Promise<BigNumberish> {
     return this.vault.auctionState();
   }
 
-  public async balanceOf(account: string): Promise<BigNumberish> {
+  public balanceOf(account: string): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.balanceOf(account);
+    return this.vault.balanceOf(account);
   }
 
-  public async bid(): Promise<Transaction> {
+  public async bid(): Promise<TransactionResponse> {
     this.verifyIsNotReadOnly();
 
     const gasEstimate = await this.vault.estimateGas.bid();
@@ -82,135 +83,135 @@ export class Vault {
     });
   }
 
-  public async cash(): Promise<Transaction> {
+  public cash(): Promise<TransactionResponse> {
     this.verifyIsNotReadOnly();
-    return await this.vault.cash();
+    return this.vault.cash();
   }
 
-  public async claimFees(): Promise<Transaction> {
+  public claimFees(): Promise<TransactionResponse> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
-
-    return await this.vault.claimFees();
+    return this.vault.claimFees();
   }
 
-  public async curator(): Promise<string> {
-    return await this.vault.curator();
+  public curator(): Promise<string> {
+    return this.vault.curator();
   }
 
-  public async decimals(): Promise<BigNumberish> {
+  public decimals(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.decimals();
+    return this.vault.decimals();
   }
 
-  public async decreaseAllowance(
+  public decreaseAllowance(
     spender: string,
     subtractedValue: BigNumberish
-  ): Promise<Transaction> {
+  ): Promise<TransactionResponse> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
-
-    return await this.vault.decreaseAllowance(spender, subtractedValue);
+    return this.vault.decreaseAllowance(spender, subtractedValue);
   }
 
-  public async end(): Promise<Transaction> {
+  public end(): Promise<TransactionResponse> {
     this.verifyIsNotReadOnly();
-    return await this.vault.end();
+    return this.vault.end();
   }
 
-  public async fee(): Promise<BigNumberish> {
+  public fee(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.fee();
+    return this.vault.fee();
   }
 
-  public async fractions(): Promise<string> {
+  public fractions(): Promise<string> {
     this.verifyMethod(SCHEMA_ERC1155);
-    return await this.vault.fractions();
+    return this.vault.fractions();
   }
 
-  public async fractionsID(): Promise<BigNumberish> {
+  public fractionsID(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC1155);
-    return await this.vault.fractionsID();
+    return this.vault.fractionsID();
   }
 
-  public async id(): Promise<BigNumberish> {
-    return await this.vault.id();
+  public id(): Promise<BigNumberish> {
+    return this.vault.id();
   }
 
-  public async increaseAllowance(spender: string, addedValue: BigNumberish): Promise<Transaction> {
+  public increaseAllowance(
+    spender: string,
+    addedValue: BigNumberish
+  ): Promise<TransactionResponse> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
-
-    return await this.vault.increaseAllowance(spender, addedValue);
+    return this.vault.increaseAllowance(spender, addedValue);
   }
 
-  public async isLivePrice(price: BigNumberish): Promise<boolean> {
+  public isLivePrice(price: BigNumberish): Promise<boolean> {
     this.verifyMethod(SCHEMA_ERC1155);
-    return await this.vault.isLivePrice(price);
+    return this.vault.isLivePrice(price);
   }
 
-  public async lastClaimed(): Promise<BigNumberish> {
+  public lastClaimed(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.lastClaimed();
+    return this.vault.lastClaimed();
   }
 
-  public async livePrice(): Promise<BigNumberish> {
-    return await this.vault.livePrice();
+  public livePrice(): Promise<BigNumberish> {
+    return this.vault.livePrice();
   }
 
-  public async name(): Promise<string> {
+  public name(): Promise<string> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.name();
+    return this.vault.name();
   }
 
-  public async priceToCount(value: BigNumberish): Promise<BigNumberish> {
+  public priceToCount(value: BigNumberish): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC1155);
-    return await this.vault.priceToCount(value);
+    return this.vault.priceToCount(value);
   }
 
-  public async reservePrice(): Promise<BigNumberish[] | BigNumberish> {
-    return await this.vault.reservePrice();
+  public reservePrice(): Promise<BigNumberish[] | BigNumberish> {
+    return this.vault.reservePrice();
   }
 
-  public async reserveTotal(): Promise<BigNumberish> {
+  public reserveTotal(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.reserveTotal();
+    return this.vault.reserveTotal();
   }
 
-  public async settings(): Promise<string> {
-    return await this.vault.settings();
+  public settings(): Promise<string> {
+    return this.vault.settings();
   }
 
-  public async supportsInterface(interfaceId: string): Promise<boolean> {
+  public supportsInterface(interfaceId: string): Promise<boolean> {
     this.verifyMethod(SCHEMA_ERC1155);
-    return await this.vault.supportsInterface(interfaceId);
+    return this.vault.supportsInterface(interfaceId);
   }
 
-  public async symbol(): Promise<string> {
+  public symbol(): Promise<string> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.symbol();
+    return this.vault.symbol();
   }
 
-  public async token(): Promise<string> {
-    return await this.vault.token();
+  public token(): Promise<string> {
+    return this.vault.token();
   }
 
-  public async totalSupply(): Promise<BigNumberish> {
+  public totalSupply(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.totalSupply();
+    return this.vault.totalSupply();
   }
 
-  public async underlying(): Promise<string> {
+  public underlying(): Promise<string> {
     this.verifyMethod(SCHEMA_ERC1155);
-    return await this.vault.underlying();
+    return this.vault.underlying();
   }
 
-  public async underlyingID(): Promise<BigNumberish> {
+  public underlyingID(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC1155);
-    return await this.vault.underlyingID();
+    return this.vault.underlyingID();
   }
 
-  public async updateAuctionLength(seconds: number): Promise<Transaction> {
+  public async updateAuctionLength(seconds: number): Promise<TransactionResponse> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
 
@@ -224,7 +225,7 @@ export class Vault {
     });
   }
 
-  public async updateCurator(curator: string): Promise<Transaction> {
+  public async updateCurator(curator: string): Promise<TransactionResponse> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
     if (!isAddress(curator)) throw new Error('Curator address is not valid');
@@ -236,7 +237,7 @@ export class Vault {
     });
   }
 
-  public async updateFee(fee: number): Promise<Transaction> {
+  public async updateFee(fee: number): Promise<TransactionResponse> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
 
@@ -247,7 +248,7 @@ export class Vault {
     });
   }
 
-  public async updateUserPrice(newPrice: BigNumberish): Promise<Transaction> {
+  public async updateUserPrice(newPrice: BigNumberish): Promise<TransactionResponse> {
     this.verifyIsNotReadOnly();
 
     const gasEstimate = await this.vault.estimateGas.updateUserPrice(newPrice);
@@ -257,31 +258,31 @@ export class Vault {
     });
   }
 
-  public async userPrices(address: string): Promise<BigNumberish | BigNumberish[]> {
-    return await this.vault.userPrices(address);
+  public userPrices(address: string): Promise<BigNumberish | BigNumberish[]> {
+    return this.vault.userPrices(address);
   }
 
-  public async vaultClosed(): Promise<boolean> {
+  public vaultClosed(): Promise<boolean> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.vaultClosed();
+    return this.vault.vaultClosed();
   }
 
-  public async version(): Promise<string> {
+  public version(): Promise<string> {
     this.verifyMethod(SCHEMA_ERC1155);
-    return await this.vault.version();
+    return this.vault.version();
   }
 
-  public async votingTokens(): Promise<BigNumberish> {
+  public votingTokens(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
-    return await this.vault.votingTokens();
+    return this.vault.votingTokens();
   }
 
-  public async weth(): Promise<string> {
-    return await this.vault.weth();
+  public weth(): Promise<string> {
+    return this.vault.weth();
   }
 
-  public async winning(): Promise<string> {
-    return await this.vault.winning();
+  public winning(): Promise<string> {
+    return this.vault.winning();
   }
 
   // Private methods
