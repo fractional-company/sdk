@@ -286,7 +286,6 @@ export class Vault {
   }
 
   // Private methods
-
   private verifyIsNotReadOnly() {
     if (this.isReadOnly) {
       throw new Error('Method requires a signer');

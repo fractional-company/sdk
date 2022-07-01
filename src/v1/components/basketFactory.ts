@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { Contract } from 'ethers';
+import { Contract, Signer } from 'ethers';
 import { TransactionResponse, TransactionReceipt } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
 import { isValidChain } from '../utilities';
@@ -13,6 +13,7 @@ import {
 
 export class BasketFactory {
   public address: string;
+  public isReadOnly: boolean;
   private basketFactory: Contract;
 
   constructor({ signerOrProvider, chainId = CHAINS.MAINNET, address }: BasketFactoryConfig) {
@@ -32,10 +33,13 @@ export class BasketFactory {
 
     const { abi, contractAddress } = factoryItem;
     this.address = contractAddress;
+    this.isReadOnly = !Signer.isSigner(signerOrProvider);
     this.basketFactory = new Contract(contractAddress, abi, signerOrProvider);
   }
 
   public async createBasket(): Promise<Basket> {
+    if (this.isReadOnly) throw new Error('Signer is required to create a basket');
+
     const tx: TransactionResponse = await this.basketFactory.createBasket();
     const txReceipt: TransactionReceipt = await tx.wait();
     if (!txReceipt || !txReceipt.status) throw new Error(`Transaction ${tx.hash} failed`);

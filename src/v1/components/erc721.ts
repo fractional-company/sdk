@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { Contract, BytesLike } from 'ethers';
+import { BytesLike, Contract, Signer } from 'ethers';
 import { TransactionResponse } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
 import { CHAINS } from '@fractional-company/common';
@@ -9,6 +9,7 @@ import abi from '../abis/erc721.json';
 
 export class ERC721 {
   public address: string;
+  public isReadOnly: boolean;
   private erc721: Contract;
 
   constructor({ address, signerOrProvider, chainId = CHAINS.MAINNET }: ERC721Config) {
@@ -16,6 +17,7 @@ export class ERC721 {
     if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
 
     this.address = address;
+    this.isReadOnly = !Signer.isSigner(signerOrProvider);
     this.erc721 = new Contract(address, abi, signerOrProvider);
   }
 
@@ -25,6 +27,8 @@ export class ERC721 {
     tokenId: number,
     data?: BytesLike
   ): Promise<TransactionResponse> {
+    this.verifyIsNotReadOnly();
+
     if (!isAddress(from)) throw new Error('From address is not valid');
     if (!isAddress(to)) throw new Error('To address is not valid');
     if (typeof tokenId !== 'number') throw new Error('Token ID must be a number');
@@ -47,10 +51,19 @@ export class ERC721 {
     operator: string,
     approved: boolean
   ): Promise<TransactionResponse> {
+    this.verifyIsNotReadOnly();
+
     if (!isAddress(operator)) throw new Error('Operator address is not valid');
     if (typeof approved !== 'boolean') throw new Error('Approved must be a boolean');
 
     const tx: TransactionResponse = await this.erc721.setApprovalForAll(operator, approved);
     return tx;
+  }
+
+  // Private methods
+  private verifyIsNotReadOnly() {
+    if (this.isReadOnly) {
+      throw new Error('Method requires a signer');
+    }
   }
 }
