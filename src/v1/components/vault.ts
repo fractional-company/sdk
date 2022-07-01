@@ -75,13 +75,10 @@ export class Vault {
     return this.vault.balanceOf(account);
   }
 
-  public async bid(): Promise<TransactionResponse> {
+  public bid(amount: BigNumberish): Promise<TransactionResponse> {
     this.verifyIsNotReadOnly();
-
-    const gasEstimate = await this.vault.estimateGas.bid();
-    const gasLimit = gasEstimate.mul(110).div(100);
-    return await this.vault.bid({
-      gasLimit
+    return this.vault.bid({
+      value: amount
     });
   }
 
@@ -203,6 +200,13 @@ export class Vault {
 
   public settings(): Promise<string> {
     return this.vault.settings();
+  }
+
+  public start(amount: BigNumberish): Promise<TransactionResponse> {
+    this.verifyIsNotReadOnly();
+    return this.vault.start({
+      value: amount
+    });
   }
 
   public supportsInterface(interfaceId: string): Promise<boolean> {
