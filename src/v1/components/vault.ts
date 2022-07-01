@@ -48,6 +48,8 @@ export class Vault {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
 
+    if (!isAddress(spender)) throw new Error('Spender address is not valid');
+
     const gasEstimate = await this.vault.estimateGas.approve(spender, amount);
     const gasLimit = gasEstimate.mul(110).div(100);
     return await this.vault.approve(spender, amount, {
@@ -150,6 +152,14 @@ export class Vault {
     return this.vault.isLivePrice(price);
   }
 
+  public kickCurator(curator: string): Promise<TransactionResponse> {
+    this.verifyMethod(SCHEMA_ERC20);
+    this.verifyIsNotReadOnly();
+
+    if (!isAddress(curator)) throw new Error('Curator address is not valid');
+    return this.vault.kickCurator(curator);
+  }
+
   public lastClaimed(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
     return this.vault.lastClaimed();
@@ -167,6 +177,19 @@ export class Vault {
   public priceToCount(value: BigNumberish): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC1155);
     return this.vault.priceToCount(value);
+  }
+
+  public redeem(): Promise<TransactionResponse> {
+    this.verifyIsNotReadOnly();
+    return this.vault.redeem();
+  }
+
+  public removeReserve(address: string): Promise<TransactionResponse> {
+    this.verifyMethod(SCHEMA_ERC20);
+    this.verifyIsNotReadOnly();
+
+    if (!isAddress(address)) throw new Error('Address is not valid');
+    return this.vault.removeReserve(address);
   }
 
   public reservePrice(): Promise<BigNumberish[] | BigNumberish> {
@@ -199,6 +222,25 @@ export class Vault {
   public totalSupply(): Promise<BigNumberish> {
     this.verifyMethod(SCHEMA_ERC20);
     return this.vault.totalSupply();
+  }
+
+  public transfer(recipient: string, amount: BigNumberish): Promise<TransactionResponse> {
+    this.verifyMethod(SCHEMA_ERC20);
+    this.verifyIsNotReadOnly();
+    if (!isAddress(recipient)) throw new Error('Recipient address is not valid');
+    return this.vault.transfer(recipient, amount);
+  }
+
+  public transferFrom(
+    sender: string,
+    recipient: string,
+    amount: BigNumberish
+  ): Promise<TransactionResponse> {
+    this.verifyMethod(SCHEMA_ERC20);
+    this.verifyIsNotReadOnly();
+    if (!isAddress(sender)) throw new Error('Sender address is not valid');
+    if (!isAddress(recipient)) throw new Error('recipient address is not valid');
+    return this.vault.transferFrom(sender, recipient, amount);
   }
 
   public underlying(): Promise<string> {
@@ -283,6 +325,37 @@ export class Vault {
 
   public winning(): Promise<string> {
     return this.vault.winning();
+  }
+
+  public withdrawERC1155(
+    token: string,
+    tokenId: BigNumberish,
+    amount: BigNumberish
+  ): Promise<TransactionResponse> {
+    this.verifyMethod(SCHEMA_ERC1155);
+    this.verifyIsNotReadOnly();
+    if (!isAddress(token)) throw new Error('Token address is not valid');
+    return this.vault.withdrawERC1155(token, tokenId, amount);
+  }
+
+  public withdrawERC20(token: string): Promise<TransactionResponse> {
+    this.verifyMethod(SCHEMA_ERC1155);
+    this.verifyIsNotReadOnly();
+    if (!isAddress(token)) throw new Error('Token address is not valid');
+    return this.vault.withdrawERC20(token);
+  }
+
+  public withdrawERC721(token: string, tokenId: BigNumberish): Promise<TransactionResponse> {
+    this.verifyMethod(SCHEMA_ERC1155);
+    this.verifyIsNotReadOnly();
+    if (!isAddress(token)) throw new Error('Token address is not valid');
+    return this.vault.withdrawERC721(token, tokenId);
+  }
+
+  public withdrawETH(): Promise<TransactionResponse> {
+    this.verifyMethod(SCHEMA_ERC1155);
+    this.verifyIsNotReadOnly();
+    return this.vault.withdrawETH();
   }
 
   // Private methods
