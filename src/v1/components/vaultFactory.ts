@@ -52,7 +52,7 @@ export class VaultFactory {
     id,
     amount,
     listPrice,
-    fee
+    fee = 0
   }: VaultData): Promise<VaultMintResponse> {
     if (this.isReadOnly) throw new Error('Signer is required to mint a vault');
 
@@ -62,9 +62,10 @@ export class VaultFactory {
 
     if (this.fractionSchema === SCHEMA_ERC20 && !symbol) throw new Error('Symbol is required');
     if (this.fractionSchema === SCHEMA_ERC20 && !name) throw new Error('Name is required');
-    if (this.fractionSchema === SCHEMA_ERC20 && !fee) throw new Error('Fee is required');
     if (this.fractionSchema === SCHEMA_ERC20 && !listPrice)
       throw new Error('List price is required');
+    if (this.fractionSchema === SCHEMA_ERC20 && (!Number.isInteger(fee) || fee < 0 || fee > 100))
+      throw new Error('Curator fee must be an integer between 0 and 100');
 
     let args: Array<any> = [];
     if (this.fractionSchema === SCHEMA_ERC20) {
