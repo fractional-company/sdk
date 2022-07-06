@@ -1,4 +1,5 @@
-/* eslint-disable */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Signer, Contract, BigNumberish } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
 import { TransactionReceipt } from '@ethersproject/providers';

@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { BytesLike, Contract, Signer } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
 import { TransactionReceipt } from '@ethersproject/providers';

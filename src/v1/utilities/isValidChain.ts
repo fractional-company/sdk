@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { getFactoryContractsMappedForChain, TYPE_VAULT_FACTORY } from '@fractional-company/common';
 
 export function isValidChain(chainId: number | string): boolean {

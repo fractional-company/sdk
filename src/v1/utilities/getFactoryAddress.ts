@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { Contract, Signer } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
 import { isAddress } from '@ethersproject/address';

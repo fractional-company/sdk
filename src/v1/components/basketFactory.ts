@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { Contract, Signer } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
 import { isAddress } from '@ethersproject/address';
@@ -27,10 +26,11 @@ export class BasketFactory {
       factoryItem = getLatestBasketItem(chainId);
     } else {
       factoryItem = getBasketItem(chainId, address);
-      if (!factoryItem)
+      if (!factoryItem) {
         throw new Error(
           `Basket factory contract ${address} does not exist on ${CHAIN_NAMES[chainId]} chain`
         );
+      }
     }
 
     const { abi, contractAddress } = factoryItem;
