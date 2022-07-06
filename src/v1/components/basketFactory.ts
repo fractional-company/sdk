@@ -1,8 +1,9 @@
 /* eslint-disable */
 import { Contract, Signer } from 'ethers';
-import { TransactionResponse, TransactionReceipt } from '@ethersproject/providers';
+import { Provider } from '@ethersproject/abstract-provider';
 import { isAddress } from '@ethersproject/address';
 import { isValidChain } from '../utilities';
+import { executeTransaction } from '../helpers';
 import { Basket, BasketFactoryConfig, BasketFactoryItem } from '../types/types';
 import {
   CHAINS,
@@ -15,6 +16,7 @@ export class BasketFactory {
   public address: string;
   public isReadOnly: boolean;
   private basketFactory: Contract;
+  private signerOrProvider: Signer | Provider;
 
   constructor({ signerOrProvider, chainId = CHAINS.MAINNET, address }: BasketFactoryConfig) {
     if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
@@ -35,14 +37,19 @@ export class BasketFactory {
     this.address = contractAddress;
     this.isReadOnly = !Signer.isSigner(signerOrProvider);
     this.basketFactory = new Contract(contractAddress, abi, signerOrProvider);
+    this.signerOrProvider = signerOrProvider;
   }
 
   public async createBasket(): Promise<Basket> {
     if (this.isReadOnly) throw new Error('Signer is required to create a basket');
 
-    const tx: TransactionResponse = await this.basketFactory.createBasket();
-    const txReceipt: TransactionReceipt = await tx.wait();
-    if (!txReceipt || !txReceipt.status) throw new Error(`Transaction ${tx.hash} failed`);
+    const txReceipt = await executeTransaction({
+      contract: this.basketFactory,
+      method: 'createBasket',
+      signerOrProvider: this.signerOrProvider
+    });
+
+    if (!txReceipt || !txReceipt.status) throw new Error(`Transaction failed`);
 
     const basket = {
       address: txReceipt.logs[0].address,

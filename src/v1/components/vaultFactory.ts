@@ -1,8 +1,10 @@
 /* eslint-disable */
 import { Signer, Contract } from 'ethers';
+import { Provider } from '@ethersproject/abstract-provider';
 import { TransactionResponse, TransactionReceipt } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
 import { isValidFractionSchema, isValidChain } from '../utilities';
+import { executeTransaction } from '../helpers';
 import { FactoryItem, FactoryConfig, VaultData, VaultMintResponse } from '../types/types';
 import {
   getVaultItem,
@@ -17,6 +19,7 @@ export class VaultFactory {
   public address: string;
   public isReadOnly: boolean;
   private vaultFactory: Contract;
+  private signerOrProvider: Signer | Provider;
 
   constructor({
     fractionSchema,
@@ -43,6 +46,7 @@ export class VaultFactory {
     this.isReadOnly = !Signer.isSigner(signerOrProvider);
     this.fractionSchema = factory.vault.fractionSchema;
     this.address = factory.contractAddress;
+    this.signerOrProvider = signerOrProvider;
   }
 
   public async mint({
@@ -74,19 +78,17 @@ export class VaultFactory {
       args = [token, id, amount];
     }
 
-    const gasEstimate = await this.vaultFactory.estimateGas.mint(...args);
-    const gasLimit = gasEstimate.mul(110).div(100);
-
-    const tx: TransactionResponse = await this.vaultFactory.mint(...args, {
-      gasLimit
+    const txReceipt = await executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vaultFactory,
+      method: 'mint',
+      args
     });
 
-    const txReceipt: TransactionReceipt = await tx.wait();
-    if (!txReceipt || !txReceipt.status) throw new Error(`Transaction ${tx.hash} failed`);
+    if (!txReceipt || !txReceipt.status) throw new Error(`Transaction failed`);
 
-    const vaultAddress = txReceipt.logs[0].address;
     return {
-      vaultAddress
+      vaultAddress: txReceipt.logs[0].address
     };
   }
 }

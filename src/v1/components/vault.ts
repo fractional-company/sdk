@@ -1,8 +1,10 @@
 /* eslint-disable */
 import { Signer, Contract, BigNumberish } from 'ethers';
-import { TransactionResponse } from '@ethersproject/providers';
+import { Provider } from '@ethersproject/abstract-provider';
+import { TransactionReceipt } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
 import { isValidChain } from '../utilities';
+import { executeTransaction } from '../helpers';
 import { VaultConfig, FactoryItem } from '../types/types';
 import {
   getFactoryContractsMappedForChain,
@@ -17,6 +19,7 @@ export class Vault {
   public address: string;
   public fractionSchema: string;
   private vault: Contract;
+  private signerOrProvider: Signer | Provider;
 
   constructor({
     address,
@@ -37,6 +40,7 @@ export class Vault {
     this.fractionSchema = fractionSchema;
     this.isReadOnly = !Signer.isSigner(signerOrProvider);
     this.vault = new Contract(address, abi, signerOrProvider);
+    this.signerOrProvider = signerOrProvider;
   }
 
   public allowance(owner: string, spender: string): Promise<BigNumberish> {
@@ -44,16 +48,17 @@ export class Vault {
     return this.vault.allowance(owner, spender);
   }
 
-  public async approve(spender: string, amount: BigNumberish): Promise<TransactionResponse> {
+  public approve(spender: string, amount: BigNumberish): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
 
     if (!isAddress(spender)) throw new Error('Spender address is not valid');
 
-    const gasEstimate = await this.vault.estimateGas.approve(spender, amount);
-    const gasLimit = gasEstimate.mul(110).div(100);
-    return await this.vault.approve(spender, amount, {
-      gasLimit
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'approve',
+      args: [spender, amount]
     });
   }
 
@@ -75,22 +80,35 @@ export class Vault {
     return this.vault.balanceOf(account);
   }
 
-  public bid(amount: BigNumberish): Promise<TransactionResponse> {
+  public bid(amount: BigNumberish): Promise<TransactionReceipt> {
     this.verifyIsNotReadOnly();
-    return this.vault.bid({
-      value: amount
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'bid',
+      options: {
+        value: amount
+      }
     });
   }
 
-  public cash(): Promise<TransactionResponse> {
+  public cash(): Promise<TransactionReceipt> {
     this.verifyIsNotReadOnly();
-    return this.vault.cash();
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'cash'
+    });
   }
 
-  public claimFees(): Promise<TransactionResponse> {
+  public claimFees(): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
-    return this.vault.claimFees();
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'claimFees'
+    });
   }
 
   public curator(): Promise<string> {
@@ -105,15 +123,24 @@ export class Vault {
   public decreaseAllowance(
     spender: string,
     subtractedValue: BigNumberish
-  ): Promise<TransactionResponse> {
+  ): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
-    return this.vault.decreaseAllowance(spender, subtractedValue);
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'decreaseAllowance',
+      args: [spender, subtractedValue]
+    });
   }
 
-  public end(): Promise<TransactionResponse> {
+  public end(): Promise<TransactionReceipt> {
     this.verifyIsNotReadOnly();
-    return this.vault.end();
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'end'
+    });
   }
 
   public fee(): Promise<BigNumberish> {
@@ -135,13 +162,15 @@ export class Vault {
     return this.vault.id();
   }
 
-  public increaseAllowance(
-    spender: string,
-    addedValue: BigNumberish
-  ): Promise<TransactionResponse> {
+  public increaseAllowance(spender: string, addedValue: BigNumberish): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
-    return this.vault.increaseAllowance(spender, addedValue);
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'increaseAllowance',
+      args: [spender, addedValue]
+    });
   }
 
   public isLivePrice(price: BigNumberish): Promise<boolean> {
@@ -149,12 +178,18 @@ export class Vault {
     return this.vault.isLivePrice(price);
   }
 
-  public kickCurator(curator: string): Promise<TransactionResponse> {
+  public kickCurator(curator: string): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
 
     if (!isAddress(curator)) throw new Error('Curator address is not valid');
-    return this.vault.kickCurator(curator);
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'kickCurator',
+      args: [curator]
+    });
   }
 
   public lastClaimed(): Promise<BigNumberish> {
@@ -176,17 +211,27 @@ export class Vault {
     return this.vault.priceToCount(value);
   }
 
-  public redeem(): Promise<TransactionResponse> {
+  public redeem(): Promise<TransactionReceipt> {
     this.verifyIsNotReadOnly();
-    return this.vault.redeem();
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'redeem'
+    });
   }
 
-  public removeReserve(address: string): Promise<TransactionResponse> {
+  public removeReserve(address: string): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
 
     if (!isAddress(address)) throw new Error('Address is not valid');
-    return this.vault.removeReserve(address);
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'removeReserve',
+      args: [address]
+    });
   }
 
   public reservePrice(): Promise<BigNumberish[] | BigNumberish> {
@@ -202,10 +247,15 @@ export class Vault {
     return this.vault.settings();
   }
 
-  public start(amount: BigNumberish): Promise<TransactionResponse> {
+  public start(amount: BigNumberish): Promise<TransactionReceipt> {
     this.verifyIsNotReadOnly();
-    return this.vault.start({
-      value: amount
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'start',
+      options: {
+        value: amount
+      }
     });
   }
 
@@ -228,23 +278,35 @@ export class Vault {
     return this.vault.totalSupply();
   }
 
-  public transfer(recipient: string, amount: BigNumberish): Promise<TransactionResponse> {
+  public transfer(recipient: string, amount: BigNumberish): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
     if (!isAddress(recipient)) throw new Error('Recipient address is not valid');
-    return this.vault.transfer(recipient, amount);
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'transfer',
+      args: [recipient, amount]
+    });
   }
 
   public transferFrom(
     sender: string,
     recipient: string,
     amount: BigNumberish
-  ): Promise<TransactionResponse> {
+  ): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
+
     if (!isAddress(sender)) throw new Error('Sender address is not valid');
     if (!isAddress(recipient)) throw new Error('recipient address is not valid');
-    return this.vault.transferFrom(sender, recipient, amount);
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'transferFrom',
+      args: [sender, recipient, amount]
+    });
   }
 
   public underlying(): Promise<string> {
@@ -257,50 +319,57 @@ export class Vault {
     return this.vault.underlyingID();
   }
 
-  public async updateAuctionLength(seconds: number): Promise<TransactionResponse> {
+  public updateAuctionLength(seconds: number): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
 
     if (typeof seconds !== 'number') throw new Error('Seconds must be a number');
     if (seconds < 0) throw new Error('Seconds must be greater than 0');
 
-    const gasEstimate = await this.vault.estimateGas.updateAuctionLength(seconds);
-    const gasLimit = gasEstimate.mul(110).div(100);
-    return await this.vault.updateAuctionLength(seconds, {
-      gasLimit
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'updateAuctionLength',
+      args: [seconds]
     });
   }
 
-  public async updateCurator(curator: string): Promise<TransactionResponse> {
+  public updateCurator(curator: string): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
+
     if (!isAddress(curator)) throw new Error('Curator address is not valid');
 
-    const gasEstimate = await this.vault.estimateGas.updateCurator(curator);
-    const gasLimit = gasEstimate.mul(110).div(100);
-    return await this.vault.updateCurator(curator, {
-      gasLimit
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'updateCurator',
+      args: [curator]
     });
   }
 
-  public async updateFee(fee: number): Promise<TransactionResponse> {
+  public updateFee(fee: number): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC20);
     this.verifyIsNotReadOnly();
 
-    const gasEstimate = await this.vault.estimateGas.updateFee(fee);
-    const gasLimit = gasEstimate.mul(110).div(100);
-    return await this.vault.updateFee(fee, {
-      gasLimit
+    if (!Number.isInteger(fee)) throw new Error('Fee must be an integer');
+    if (fee < 0) throw new Error('Fee must be greater than 0');
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'updateFee',
+      args: [fee]
     });
   }
 
-  public async updateUserPrice(newPrice: BigNumberish): Promise<TransactionResponse> {
+  public updateUserPrice(newPrice: BigNumberish): Promise<TransactionReceipt> {
     this.verifyIsNotReadOnly();
-
-    const gasEstimate = await this.vault.estimateGas.updateUserPrice(newPrice);
-    const gasLimit = gasEstimate.mul(110).div(100);
-    return await this.vault.updateUserPrice(newPrice, {
-      gasLimit
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'updateUserPrice',
+      args: [newPrice]
     });
   }
 
@@ -335,31 +404,56 @@ export class Vault {
     token: string,
     tokenId: BigNumberish,
     amount: BigNumberish
-  ): Promise<TransactionResponse> {
+  ): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC1155);
     this.verifyIsNotReadOnly();
+
     if (!isAddress(token)) throw new Error('Token address is not valid');
-    return this.vault.withdrawERC1155(token, tokenId, amount);
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'withdrawERC1155',
+      args: [token, tokenId, amount]
+    });
   }
 
-  public withdrawERC20(token: string): Promise<TransactionResponse> {
+  public withdrawERC20(token: string): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC1155);
     this.verifyIsNotReadOnly();
+
     if (!isAddress(token)) throw new Error('Token address is not valid');
-    return this.vault.withdrawERC20(token);
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'withdrawERC20',
+      args: [token]
+    });
   }
 
-  public withdrawERC721(token: string, tokenId: BigNumberish): Promise<TransactionResponse> {
+  public withdrawERC721(token: string, tokenId: BigNumberish): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC1155);
     this.verifyIsNotReadOnly();
+
     if (!isAddress(token)) throw new Error('Token address is not valid');
-    return this.vault.withdrawERC721(token, tokenId);
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'withdrawERC721',
+      args: [token, tokenId]
+    });
   }
 
-  public withdrawETH(): Promise<TransactionResponse> {
+  public withdrawETH(): Promise<TransactionReceipt> {
     this.verifyMethod(SCHEMA_ERC1155);
     this.verifyIsNotReadOnly();
-    return this.vault.withdrawETH();
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.vault,
+      method: 'withdrawETH'
+    });
   }
 
   // Private methods

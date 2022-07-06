@@ -8,6 +8,7 @@ export interface VaultConfig {
   address: string;
   factoryAddress: string;
 }
+
 export interface VaultData {
   token: string;
   id: BigNumberish;
@@ -67,4 +68,12 @@ export interface ERC721Config {
   address: string;
   signerOrProvider: Signer | Provider;
   chainId: number | string;
+}
+
+// Contract
+export interface ContractOverrides {
+  nonce?: BigNumberish;
+  gasLimit?: BigNumberish;
+  gasPrice?: BigNumberish;
+  value?: BigNumberish;
 }
