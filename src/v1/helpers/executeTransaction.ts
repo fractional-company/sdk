@@ -25,11 +25,11 @@ export async function executeTransaction({
   });
 
   const tx: TransactionResponse = await contract.functions[method](...args, {
-    ...options,
     nonce,
     gasLimit,
     maxFeePerGas,
-    maxPriorityFeePerGas
+    maxPriorityFeePerGas,
+    ...options
   });
 
   if (!tx) throw new Error('Transaction failed');

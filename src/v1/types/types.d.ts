@@ -19,10 +19,6 @@ export interface VaultData {
   symbol?: string;
 }
 
-export interface VaultMintResponse {
-  vaultAddress: string;
-}
-
 // Vault Factory
 export interface FactoryConfig {
   signerOrProvider: Signer | Provider;
@@ -55,12 +51,6 @@ export interface BasketFactoryItem {
   basket: {
     abi: any;
   };
-}
-
-// Basket
-export interface Basket {
-  address: string;
-  tokenId: BigNumberish;
 }
 
 // ERC721

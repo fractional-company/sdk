@@ -1,9 +1,10 @@
 import { Signer, Contract } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
 import { isAddress } from '@ethersproject/address';
+import { TransactionReceipt } from '@ethersproject/providers';
 import { isValidFractionSchema, isValidChain } from '../utilities';
 import { executeTransaction } from '../helpers';
-import { FactoryItem, FactoryConfig, VaultData, VaultMintResponse } from '../types/types';
+import { FactoryItem, FactoryConfig, VaultData } from '../types/types';
 import {
   getVaultItem,
   getLatestVaultItem,
@@ -47,7 +48,7 @@ export class VaultFactory {
     this.signerOrProvider = signerOrProvider;
   }
 
-  public async mint({
+  public mint({
     name,
     symbol,
     token,
@@ -55,7 +56,7 @@ export class VaultFactory {
     amount,
     listPrice,
     fee = 0
-  }: VaultData): Promise<VaultMintResponse> {
+  }: VaultData): Promise<TransactionReceipt> {
     if (this.isReadOnly) throw new Error('Signer is required to mint a vault');
 
     if (!amount) throw new Error('Supply is required');
@@ -76,17 +77,11 @@ export class VaultFactory {
       args = [token, id, amount];
     }
 
-    const txReceipt = await executeTransaction({
+    return executeTransaction({
       signerOrProvider: this.signerOrProvider,
       contract: this.vaultFactory,
       method: 'mint',
       args
     });
-
-    if (!txReceipt || !txReceipt.status) throw new Error(`Transaction failed`);
-
-    return {
-      vaultAddress: txReceipt.logs[0].address
-    };
   }
 }

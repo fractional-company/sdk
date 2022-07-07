@@ -1,9 +1,10 @@
 import { Contract, Signer } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
+import { TransactionReceipt } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
 import { isValidChain } from '../utilities';
 import { executeTransaction } from '../helpers';
-import { Basket, BasketFactoryConfig, BasketFactoryItem } from '../types/types';
+import { BasketFactoryConfig, BasketFactoryItem } from '../types/types';
 import {
   CHAINS,
   CHAIN_NAMES,
@@ -40,22 +41,13 @@ export class BasketFactory {
     this.signerOrProvider = signerOrProvider;
   }
 
-  public async createBasket(): Promise<Basket> {
+  public createBasket(): Promise<TransactionReceipt> {
     if (this.isReadOnly) throw new Error('Signer is required to create a basket');
 
-    const txReceipt = await executeTransaction({
+    return executeTransaction({
       contract: this.basketFactory,
       method: 'createBasket',
       signerOrProvider: this.signerOrProvider
     });
-
-    if (!txReceipt || !txReceipt.status) throw new Error(`Transaction failed`);
-
-    const basket = {
-      address: txReceipt.logs[0].address,
-      tokenId: 0
-    };
-
-    return basket;
   }
 }
