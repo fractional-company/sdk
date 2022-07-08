@@ -115,5 +115,8 @@ dist
 .yarn/install-state.gz
 .pnp.*
 .idea/
+
 # Compiled code
-lib/
+dist
+
+.DS_Store

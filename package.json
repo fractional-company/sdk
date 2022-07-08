@@ -1,47 +1,66 @@
 {
   "name": "@fractional-company/sdk",
   "version": "0.0.0-development",
-  "description": "Fractional V2 sdk",
-  "main": "lib/src/index.js",
-  "files": [
-    "lib/**/*"
-  ],
-  "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf lib",
-    "cm": "cz",
-    "coverage": "codecov",
-    "lint": "eslint src --fix",
-    "prepare": "husky install",
-    "semantic-release": "semantic-release",
-    "watch": "npx tsc --watch",
-    "test:watch": "jest --watch",
-    "test": "jest --coverage",
-    "typecheck": "tsc --noEmit"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fractional-company/sdk.git"
-  },
-  "license": "MIT",
-  "author": {
-    "name": "CryptoSamurai",
-    "url": "https://fractional.art/"
-  },
-  "engines": {
-    "node": ">=16.0"
-  },
+  "description": "Fractional SDK",
   "keywords": [
     "ethereum",
     "crypto",
     "fractional",
+    "nft",
     "sdk",
     "sdk-js"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fractional-company/sdk.git"
+  },
+  "homepage": "https://github.com/fractional-company/sdk.git#readme",
   "bugs": {
     "url": "https://github.com/fractional-company/sdk.git/issues"
   },
-  "homepage": "https://github.com/fractional-company/sdk.git#readme",
+  "release": {
+    "branches": [
+      "main"
+    ]
+  },
+  "author": {
+    "name": "CryptoSamurai",
+    "url": "https://fractional.art/"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0"
+  },
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "cm": "cz",
+    "dev": "tsc --watch",
+    "lint": "eslint . --ext .ts --fix",
+    "prepare": "husky install",
+    "semantic-release": "semantic-release",
+    "test:watch": "jest --watch",
+    "test": "jest --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "lint-staged": {
+    "*.ts": "eslint . --ext .ts --fix"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/@ryansonshine/cz-conventional-changelog"
+    }
+  },
+  "dependencies": {
+    "@fractional-company/common": "^0.0.71",
+    "ethers": "^5.6.8",
+    "ts-jest": "^28.0.4"
+  },
   "devDependencies": {
     "@ryansonshine/commitizen": "^4.2.8",
     "@ryansonshine/cz-conventional-changelog": "^3.3.4",
@@ -50,38 +69,14 @@
     "@types/node": "^12.20.11",
     "@typescript-eslint/eslint-plugin": "^4.22.0",
     "@typescript-eslint/parser": "^4.22.0",
-    "codecov": "^3.8.3",
     "eslint": "^7.25.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^3.4.0",
-    "husky": "^6.0.0",
+    "husky": "^7.0.0",
     "jest": "^28.1.1",
     "lint-staged": "^10.5.4",
-    "prettier": "^2.2.1",
     "semantic-release": "^19.0.2",
     "ts-node": "^10.2.1",
-    "typescript": "^4.2.4"
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/@ryansonshine/cz-conventional-changelog"
-    }
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint"
-    }
-  },
-  "lint-staged": {
-    "*.ts": "eslint --cache --cache-location .eslintcache --fix"
-  },
-  "release": {
-    "branches": [
-      "main"
-    ]
-  },
-  "dependencies": {
-    "ts-jest": "^28.0.4"
+    "typescript": "^4.7.4"
   }
 }
