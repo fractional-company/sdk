@@ -2,9 +2,9 @@ import { BytesLike, Contract, Signer } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
 import { TransactionReceipt } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
-import { CHAINS } from '../common';
+import { Chains } from '../common';
 import { isValidChain, executeTransaction } from '../utils';
-import { abi } from '../common';
+import { ABI } from '../common';
 
 interface ERC721Config {
   address: string;
@@ -18,13 +18,13 @@ export class ERC721 {
   private erc721: Contract;
   private signerOrProvider: Signer | Provider;
 
-  constructor({ address, signerOrProvider, chainId = CHAINS.MAINNET }: ERC721Config) {
+  constructor({ address, signerOrProvider, chainId = Chains.Mainnet }: ERC721Config) {
     if (!isAddress(address)) throw new Error('ERC721 contract address is not valid');
     if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
 
     this.address = address;
     this.isReadOnly = !Signer.isSigner(signerOrProvider);
-    this.erc721 = new Contract(address, abi.erc721Abi, signerOrProvider);
+    this.erc721 = new Contract(address, ABI.erc721, signerOrProvider);
     this.signerOrProvider = signerOrProvider;
   }
 

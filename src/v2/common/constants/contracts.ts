@@ -1,81 +1,75 @@
-import { abi } from '../abi';
-import { CHAINS } from './chains';
+import { Chains } from './chains';
+import { ABI } from '../abi';
 
-export const CONTRACTS = {
-  [CHAINS.MAINNET]: {
-    BASE_VAULT: {
-      address: '0x0000000000000000000000000000000000000000',
-      abi: abi.baseVaultAbi
+export const Contracts: {
+  [key: string]: {
+    address: {
+      [key: number]: string;
+    };
+    ABI: any;
+  };
+} = {
+  BaseVault: {
+    address: {
+      [Chains.Mainnet]: '0x0000000000000000000000000000000000000000',
+      [Chains.Rinkeby]: '0xec194Dee666725E512DBe2bf40306C7C9BCD4651'
     },
-    BUYOUT: {
-      address: '0x0000000000000000000000000000000000000000',
-      abi: abi.buyoutAbi
-    },
-    FERC1155: {
-      address: '0x0000000000000000000000000000000000000000',
-      abi: abi.ferc1155Abi
-    },
-    MIGRATION: {
-      address: '0x0000000000000000000000000000000000000000',
-      abi: abi.migrationAbi
-    },
-    SUPPLY: {
-      address: '0x0000000000000000000000000000000000000000',
-      abi: abi.supplyAbi
-    },
-    TRANSFER: {
-      address: '0x0000000000000000000000000000000000000000',
-      abi: abi.transferAbi
-    },
-    VAULT: {
-      address: '0x0000000000000000000000000000000000000000',
-      abi: abi.vaultAbi
-    },
-    VAULT_FACTORY: {
-      address: '0x0000000000000000000000000000000000000000',
-      abi: abi.vaultFactoryAbi
-    },
-    VAULT_REGISTRY: {
-      address: '0x0000000000000000000000000000000000000000',
-      abi: abi.vaultRegistryAbi
-    }
+    ABI: ABI.baseVault
   },
-  [CHAINS.RINKEBY]: {
-    BASE_VAULT: {
-      address: '0xec194Dee666725E512DBe2bf40306C7C9BCD4651',
-      abi: abi.baseVaultAbi
+  Buyout: {
+    address: {
+      [Chains.Mainnet]: '0x0000000000000000000000000000000000000000',
+      [Chains.Rinkeby]: '0x7003c79786f5Af5079699BA77DE9CB04cc569fD4'
     },
-    BUYOUT: {
-      address: '0x7003c79786f5Af5079699BA77DE9CB04cc569fD4',
-      abi: abi.buyoutAbi
+    ABI: ABI.buyout
+  },
+  FERC1155: {
+    address: {
+      [Chains.Mainnet]: '0x0000000000000000000000000000000000000000',
+      [Chains.Rinkeby]: '0x88a8c1e700D51746DE0d3BD8CA0aEF1912628656'
     },
-    FERC1155: {
-      address: '0x88a8c1e700D51746DE0d3BD8CA0aEF1912628656',
-      abi: abi.ferc1155Abi
+    ABI: ABI.ferc1155
+  },
+  Migration: {
+    address: {
+      [Chains.Mainnet]: '0x0000000000000000000000000000000000000000',
+      [Chains.Rinkeby]: '0x6bb11960324d41d77Aaaf8C8c93c956A1F2345eA'
     },
-    MIGRATION: {
-      address: '0x6bb11960324d41d77Aaaf8C8c93c956A1F2345eA',
-      abi: abi.migrationAbi
+    ABI: ABI.migration
+  },
+  Supply: {
+    address: {
+      [Chains.Mainnet]: '0x0000000000000000000000000000000000000000',
+      [Chains.Rinkeby]: '0x88B8b0D1047caDD2B28AaEdf2fE2B863fe8885C2'
     },
-    SUPPLY: {
-      address: '0x88B8b0D1047caDD2B28AaEdf2fE2B863fe8885C2',
-      abi: abi.supplyAbi
+    ABI: ABI.supply
+  },
+  Transfer: {
+    address: {
+      [Chains.Mainnet]: '0x0000000000000000000000000000000000000000',
+      [Chains.Rinkeby]: '0x4a92225796d01840AF1e07b8D872A046d0F08Edc'
     },
-    TRANSFER: {
-      address: '0x4a92225796d01840AF1e07b8D872A046d0F08Edc',
-      abi: abi.transferAbi
+    ABI: ABI.transfer
+  },
+  Vault: {
+    address: {
+      [Chains.Mainnet]: '0x0000000000000000000000000000000000000000',
+      [Chains.Rinkeby]: '0x63625DA7E523e716B1E317493Acd2b8d79e4230A'
     },
-    VAULT: {
-      address: '0x63625DA7E523e716B1E317493Acd2b8d79e4230A',
-      abi: abi.vaultAbi
+    ABI: ABI.vault
+  },
+  VaultFactory: {
+    address: {
+      [Chains.Mainnet]: '0x0000000000000000000000000000000000000000',
+      [Chains.Rinkeby]: '0x9BA1Ec3f27FA46c42ba49ba76Bd082dD6DAFAA20'
     },
-    VAULT_FACTORY: {
-      address: '0x9BA1Ec3f27FA46c42ba49ba76Bd082dD6DAFAA20',
-      abi: abi.vaultFactoryAbi
+    ABI: ABI.vaultFactory
+  },
+  VaultRegistry: {
+    address: {
+      [Chains.Mainnet]: '0x0000000000000000000000000000000000000000',
+      [Chains.Rinkeby]: '0x2580E23D6Bc9E23F5EF55563b1e3E5AFe2711689'
     },
-    VAULT_REGISTRY: {
-      address: '0x2580E23D6Bc9E23F5EF55563b1e3E5AFe2711689',
-      abi: abi.vaultRegistryAbi
-    }
+    ABI: ABI.vaultRegistry
   }
 };

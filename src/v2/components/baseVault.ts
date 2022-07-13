@@ -5,7 +5,7 @@ import { Provider } from '@ethersproject/abstract-provider';
 import { TransactionReceipt } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
 import { isValidChain, executeTransaction, isValidTokenStandard } from '../utils';
-import { CHAINS, CONTRACTS, TOKEN_STANDARDS } from '../common';
+import { Chains, Contracts, TokenStandards } from '../common';
 
 interface Arguments {
   signerOrProvider: Signer | Provider;
@@ -26,11 +26,13 @@ export class BaseVault {
   private isReadOnly: boolean;
   private signerOrProvider: Signer | Provider;
 
-  constructor({ signerOrProvider, chainId = CHAINS.MAINNET }: Arguments) {
+  constructor({ signerOrProvider, chainId = Chains.Mainnet }: Arguments) {
     if (!isValidChain(chainId)) throw new Error('Invalid chain ID');
-    const { abi, address } = CONTRACTS[chainId].BASE_VAULT;
+    const ABI = Contracts.BaseVault.ABI;
+    const address = Contracts.BaseVault.address[chainId];
+
     this.address = address;
-    this.baseVault = new Contract(address, abi, signerOrProvider);
+    this.baseVault = new Contract(address, ABI, signerOrProvider);
     this.isReadOnly = !Signer.isSigner(signerOrProvider);
     this.signerOrProvider = signerOrProvider;
   }
@@ -166,17 +168,17 @@ export class BaseVault {
 
       const tokenStandard = token.standard.toUpperCase();
       switch (tokenStandard) {
-        case TOKEN_STANDARDS.ERC20:
+        case TokenStandards.ERC20:
           if (!token.amount) throw new Error(`ERC20 token ${token.address} must have an amount`);
           erc20Data.addresses.push(token.address);
           erc20Data.amounts.push(token.amount);
           break;
-        case TOKEN_STANDARDS.ERC721:
+        case TokenStandards.ERC721:
           if (!token.id) throw new Error(`ERC721 token ${token.address} must have a token id`);
           erc721Data.addresses.push(token.address);
           erc721Data.ids.push(token.id);
           break;
-        case TOKEN_STANDARDS.ERC1155:
+        case TokenStandards.ERC1155:
           if (!token.id) throw new Error(`ERC1155 token ${token.address} must have a token id`);
           if (!token.amount) throw new Error(`ERC1155 token ${token.address} must have an amount`);
           if (token.data && typeof token.data !== 'string')

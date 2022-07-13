@@ -1,25 +1,25 @@
-import baseVaultAbi from './modules/baseVault.json';
-import buyoutAbi from './modules/buyout.json';
-import migrationAbi from './modules/migration.json';
-import supplyAbi from './targets/supply.json';
-import transferAbi from './targets/transfer.json';
-import erc20Abi from './tokens/erc20.json';
-import erc721Abi from './tokens/erc721.json';
-import ferc1155Abi from './tokens/ferc1155.json';
-import vaultAbi from './vaults/vault.json';
-import vaultFactoryAbi from './vaults/vaultFactory.json';
-import vaultRegistryAbi from './vaults/vaultRegistry.json';
+import baseVault from './modules/baseVault.json';
+import buyout from './modules/buyout.json';
+import migration from './modules/migration.json';
+import supply from './targets/supply.json';
+import transfer from './targets/transfer.json';
+import erc20 from './tokens/erc20.json';
+import erc721 from './tokens/erc721.json';
+import ferc1155 from './tokens/ferc1155.json';
+import vault from './vaults/vault.json';
+import vaultFactory from './vaults/vaultFactory.json';
+import vaultRegistry from './vaults/vaultRegistry.json';
 
-export const abi = {
-  baseVaultAbi,
-  buyoutAbi,
-  erc20Abi,
-  erc721Abi,
-  ferc1155Abi,
-  migrationAbi,
-  supplyAbi,
-  transferAbi,
-  vaultAbi,
-  vaultFactoryAbi,
-  vaultRegistryAbi
+export const ABI = {
+  baseVault,
+  buyout,
+  erc20,
+  erc721,
+  ferc1155,
+  migration,
+  supply,
+  transfer,
+  vault,
+  vaultFactory,
+  vaultRegistry
 };

@@ -3,7 +3,7 @@ import { Provider } from '@ethersproject/abstract-provider';
 import { TransactionReceipt } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
 import { isValidChain, executeTransaction } from '../utils';
-import { abi, CHAINS } from '../common';
+import { ABI, Chains } from '../common';
 
 interface ERC20Config {
   address: string;
@@ -17,13 +17,13 @@ export class ERC20 {
   private erc20: Contract;
   private signerOrProvider: Signer | Provider;
 
-  constructor({ address, signerOrProvider, chainId = CHAINS.MAINNET }: ERC20Config) {
+  constructor({ address, signerOrProvider, chainId = Chains.Mainnet }: ERC20Config) {
     if (!isAddress(address)) throw new Error('ERC20 contract address is not valid');
     if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
 
     this.address = address;
     this.isReadOnly = !Signer.isSigner(signerOrProvider);
-    this.erc20 = new Contract(address, abi.erc20Abi, signerOrProvider);
+    this.erc20 = new Contract(address, ABI.erc20, signerOrProvider);
     this.signerOrProvider = signerOrProvider;
   }
 

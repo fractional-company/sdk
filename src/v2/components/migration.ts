@@ -10,31 +10,29 @@ interface Arguments {
   chainId?: number;
 }
 
-export class Buyout {
+export class Migration {
   public address: string;
-  private buyout: Contract;
+  private migration: Contract;
   private isReadOnly: boolean;
   private signerOrProvider: Signer | Provider;
 
   constructor({ signerOrProvider, chainId = Chains.Mainnet }: Arguments) {
     if (!isValidChain(chainId)) throw new Error('Invalid chain ID');
-    const ABI = Contracts.Buyout.ABI;
-    const address = Contracts.Buyout.address[chainId];
+    const ABI = Contracts.Migration.ABI;
+    const address = Contracts.Migration.address[chainId];
 
     this.address = address;
-    this.buyout = new Contract(address, ABI, signerOrProvider);
+    this.migration = new Contract(address, ABI, signerOrProvider);
     this.isReadOnly = !Signer.isSigner(signerOrProvider);
     this.signerOrProvider = signerOrProvider;
   }
 
   public getLeafNodes(): Promise<string[]> {
-    return this.buyout.getLeafNodes();
+    return this.migration.getLeafNodes();
   }
 
   // Private methods
-  private verifyIsNotReadOnly(): void {
-    if (this.isReadOnly) {
-      throw new Error('Method requires a signer');
-    }
+  #verifyIsNotReadOnly(): void {
+    if (this.isReadOnly) throw new Error('Method requires a signer');
   }
 }

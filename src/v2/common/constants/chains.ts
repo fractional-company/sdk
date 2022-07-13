@@ -1,6 +1,6 @@
-export const CHAINS = {
-  MAINNET: 1,
-  RINKEBY: 4,
-  GOERLI: 5,
-  SEPOLIA: 11155111
+export const Chains = {
+  Mainnet: 1,
+  Rinkeby: 4,
+  Goerli: 5,
+  Sepolia: 11155111
 };
