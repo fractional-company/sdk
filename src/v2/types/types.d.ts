@@ -8,3 +8,11 @@ export interface ContractOverrides {
 export interface Proof {
   [key: number]: string[];
 }
+
+export interface Token {
+  standard: string;
+  address: string;
+  id?: BigNumberish;
+  amount?: BigNumberish;
+  data?: string[];
+}

@@ -1,8 +1,11 @@
 import { Provider } from '@ethersproject/abstract-provider';
-import { Signer, BigNumberish } from 'ethers';
+import { Contract, Signer, BigNumberish } from 'ethers';
+import { TransactionReceipt } from '@ethersproject/providers';
 import { BaseVault } from './components';
-import { isValidChain, isValidAmount } from './utils';
-import { Chains, Proofs, Contracts } from './common';
+import { isAddress } from 'ethers/lib/utils';
+import { Token } from './types/types';
+import { Chains, Proofs, Contracts, TokenStandards } from './common';
+import { isValidChain, isValidAmount, isValidTokenStandard, executeTransaction } from './utils';
 
 export class SDK {
   public readonly chainId: number;
@@ -99,6 +102,122 @@ export class SDK {
       vaultAddress: tx.logs[0].address,
       transactionHash: tx.transactionHash
     };
+  }
+
+  public depositTokens(from: string, to: string, tokens: Token[]): Promise<TransactionReceipt> {
+    this.#verifyIsNotReadOnly();
+    if (!isAddress(from)) throw new Error(`Invalid from address ${from}`);
+    if (!isAddress(to)) throw new Error(`Invalid to address ${to}`);
+    if (!Array.isArray(tokens)) throw new Error('Tokens must be an array');
+    if (tokens.length === 0) throw new Error('Tokens array must not be empty');
+
+    const erc20Data: {
+      addresses: string[];
+      amounts: BigNumberish[];
+    } = {
+      addresses: [],
+      amounts: []
+    };
+
+    const erc721Data: {
+      addresses: string[];
+      ids: BigNumberish[];
+    } = {
+      addresses: [],
+      ids: []
+    };
+
+    const erc1155Data: {
+      addresses: string[];
+      ids: BigNumberish[];
+      amounts: BigNumberish[];
+      datas: string[];
+    } = {
+      addresses: [],
+      ids: [],
+      amounts: [],
+      datas: []
+    };
+
+    for (const token of tokens) {
+      if (!isAddress(token.address)) throw new Error(`Invalid token address ${token.address}`);
+      if (!isValidTokenStandard(token.standard))
+        throw new Error(`Invalid token standard ${token.standard}`);
+
+      const tokenStandard = token.standard.toUpperCase();
+      switch (tokenStandard) {
+        case TokenStandards.ERC20:
+          if (!token.amount) throw new Error(`ERC20 token ${token.address} must have an amount`);
+          erc20Data.addresses.push(token.address);
+          erc20Data.amounts.push(token.amount);
+          break;
+        case TokenStandards.ERC721:
+          if (!token.id) throw new Error(`ERC721 token ${token.address} must have a token id`);
+          erc721Data.addresses.push(token.address);
+          erc721Data.ids.push(token.id);
+          break;
+        case TokenStandards.ERC1155:
+          if (!token.id) throw new Error(`ERC1155 token ${token.address} must have a token id`);
+          if (!token.amount) throw new Error(`ERC1155 token ${token.address} must have an amount`);
+          if (token.data && typeof token.data !== 'string')
+            throw new Error(`ERC1155 token ${token.address} data must be a string`);
+
+          erc1155Data.addresses.push(token.address);
+          erc1155Data.ids.push(token.id);
+          erc1155Data.amounts.push(token.amount);
+          erc1155Data.datas.push(token.data || '0x');
+          break;
+        default:
+          throw new Error(`Invalid token standard ${tokenStandard} for token ${token.address}`);
+      }
+    }
+
+    const baseVaultABI = Contracts.BaseVault.ABI;
+    const baseVaultAddress = Contracts.BaseVault.address[this.chainId];
+    const baseVault = new Contract(baseVaultAddress, baseVaultABI, this.signerOrProvider);
+
+    const encodedData: string[] = [];
+    if (erc20Data.addresses.length > 0) {
+      encodedData.push(
+        baseVault.interface.encodeFunctionData('batchDepositERC20', [
+          from,
+          to,
+          erc20Data.addresses,
+          erc20Data.amounts
+        ])
+      );
+    }
+
+    if (erc721Data.addresses.length > 0) {
+      encodedData.push(
+        baseVault.interface.encodeFunctionData('batchDepositERC721', [
+          from,
+          to,
+          erc721Data.addresses,
+          erc721Data.ids
+        ])
+      );
+    }
+
+    if (erc1155Data.addresses.length > 0) {
+      encodedData.push(
+        baseVault.interface.encodeFunctionData('batchDepositERC1155', [
+          from,
+          to,
+          erc1155Data.addresses,
+          erc1155Data.ids,
+          erc1155Data.amounts,
+          erc1155Data.datas
+        ])
+      );
+    }
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: baseVault,
+      method: 'multicall',
+      args: [encodedData]
+    });
   }
 
   // Private methods
