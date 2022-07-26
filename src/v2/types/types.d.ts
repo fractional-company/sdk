@@ -29,3 +29,9 @@ export interface BuyoutInfo {
   startTime: BigNumber;
   state: AuctionState;
 }
+
+export interface Permission {
+  module: string;
+  target: string;
+  selector: string;
+}

@@ -4,7 +4,7 @@ import { Provider } from '@ethersproject/abstract-provider';
 import { TransactionReceipt } from '@ethersproject/providers';
 import { isAddress, parseEther } from 'ethers/lib/utils';
 import { isValidChain, isNonNegativeEther, executeTransaction } from '../utils';
-import { BuyoutInfo } from '../types/types';
+import { BuyoutInfo, Permission } from '../types/types';
 import { Chains, Contracts } from '../common';
 
 interface Arguments {
@@ -45,6 +45,15 @@ export class Buyout {
 
   public async getLeafNodes(): Promise<string[]> {
     return this.buyout.functions.getLeafNodes();
+  }
+
+  public async getPermissions(): Promise<Permission[]> {
+    const response: [Permission[]] = await this.buyout.functions.getPermissions();
+    return response[0].map((permission) => ({
+      module: permission.module,
+      target: permission.target,
+      selector: permission.selector
+    }));
   }
 
   public async start(vaultAddress: string, amount: string): Promise<TransactionReceipt> {
