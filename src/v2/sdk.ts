@@ -1,5 +1,5 @@
 import { Provider } from '@ethersproject/abstract-provider';
-import { Contract, Signer, BigNumberish } from 'ethers';
+import { Contract, Signer, BigNumberish, BigNumber } from 'ethers';
 import { TransactionReceipt } from '@ethersproject/providers';
 import { isAddress, parseEther } from 'ethers/lib/utils';
 import { BaseVault, Buyout, FERC1155 } from './components';
@@ -368,11 +368,20 @@ export class SDK {
     const buyoutModule = new Contract(buyoutModuleAddress, buyoutModuleABI, this.signerOrProvider);
 
     // Validate buyout state
-    const buyoutInfo: { state: number } = await buyoutModule.functions.buyoutInfo(vaultAddress);
+    const buyoutInfo: { state: number; startTime: BigNumber } =
+      await buyoutModule.functions.buyoutInfo(vaultAddress);
     if (!buyoutInfo) throw new Error(`Vault ${vaultAddress} does not exist`);
     if (buyoutInfo.state === AuctionState.inactive) throw new Error(`Buyout auction is not active`);
     if (buyoutInfo.state === AuctionState.success)
       throw new Error(`Buyout auction is already closed`);
+
+    // Validate that rejection has ended
+    const period: [BigNumber] = await buyoutModule.functions.REJECTION_PERIOD();
+    const auctionEnd = period[0].toNumber() + buyoutInfo.startTime.toNumber(); // unix timestamp in seconds
+    const now = Math.floor(Date.now() / 1000);
+    if (now < auctionEnd) {
+      throw new Error(`Cannot end auction before the rejection period has ended`);
+    }
 
     // Get proofs
     const proofs = await getProofsByAddress(vaultAddress, this.signerOrProvider);
