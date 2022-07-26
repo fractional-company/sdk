@@ -1,8 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Signer, Contract } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
-import { isValidChain } from '../utils';
+import { TransactionReceipt } from '@ethersproject/providers';
+import { isAddress, parseEther } from 'ethers/lib/utils';
+import { isValidChain, isNonNegativeEther, executeTransaction } from '../utils';
+import { BuyoutInfo } from '../types/types';
 import { Chains, Contracts } from '../common';
 
 interface Arguments {
@@ -27,12 +29,44 @@ export class Buyout {
     this.signerOrProvider = signerOrProvider;
   }
 
-  public getLeafNodes(): Promise<string[]> {
-    return this.buyout.getLeafNodes();
+  public async buyoutInfo(vaultAddress: string): Promise<BuyoutInfo> {
+    if (!isAddress(vaultAddress)) throw new Error(`Vault address ${vaultAddress} is not valid`);
+    const info: BuyoutInfo = await this.buyout.functions.buyoutInfo(vaultAddress);
+
+    return {
+      ethBalance: info.ethBalance,
+      fractionPrice: info.fractionPrice,
+      lastTotalSupply: info.lastTotalSupply,
+      proposer: info.proposer,
+      startTime: info.startTime,
+      state: info.state
+    };
+  }
+
+  public async getLeafNodes(): Promise<string[]> {
+    return this.buyout.functions.getLeafNodes();
+  }
+
+  public async start(vaultAddress: string, amount: string): Promise<TransactionReceipt> {
+    this.#verifyIsNotReadOnly();
+
+    if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
+    if (!isNonNegativeEther(amount))
+      throw new Error(`Amount must be greater than or equal to zero`);
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.buyout,
+      method: 'start',
+      args: [vaultAddress],
+      options: {
+        value: parseEther(amount)
+      }
+    });
   }
 
   // Private methods
-  private verifyIsNotReadOnly(): void {
+  #verifyIsNotReadOnly(): void {
     if (this.isReadOnly) {
       throw new Error('Method requires a signer');
     }

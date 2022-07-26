@@ -1,11 +1,22 @@
 import { Provider } from '@ethersproject/abstract-provider';
 import { Contract, Signer, BigNumberish } from 'ethers';
 import { TransactionReceipt } from '@ethersproject/providers';
-import { BaseVault } from './components';
-import { isAddress } from 'ethers/lib/utils';
-import { Token } from './types/types';
-import { Chains, Proofs, Contracts, TokenStandards } from './common';
-import { isValidChain, isValidAmount, isValidTokenStandard, executeTransaction } from './utils';
+import { isAddress, parseEther } from 'ethers/lib/utils';
+import { BaseVault, Buyout, FERC1155 } from './components';
+import { Token, AuctionState } from './types/types';
+import { Chains, Contracts, TokenStandards } from './common';
+import {
+  isNonNegativeEther,
+  isValidChain,
+  isValidAmount,
+  isValidTokenStandard,
+  executeTransaction,
+  getCurrentWallet,
+  getPermitSignature,
+  getProofsByAddress,
+  getProofsByModules,
+  getVaultId
+} from './utils';
 
 export class SDK {
   public readonly chainId: number;
@@ -44,7 +55,8 @@ export class SDK {
     this.#verifyIsNotReadOnly();
 
     // Fraction supply
-    if (!isValidAmount(fractionSupply)) throw new Error(`Invalid fraction supply`);
+    if (!isValidAmount(fractionSupply))
+      throw new Error(`Supply must be an integer greater than or equal to zero`);
 
     // Modules
     if (!Array.isArray(modules)) throw new Error(`Modules must be an array`);
@@ -62,9 +74,8 @@ export class SDK {
     }
 
     // Mint Proof
-    const mintProofs = Proofs[moduleNames.join('_')];
-    if (!mintProofs) throw new Error(`Combination of modules is not supported`);
-    const mintProof = mintProofs[this.chainId];
+    const proofs = getProofsByModules(moduleNames, this.chainId);
+    const mintProof = proofs[0];
 
     // Targets
     if (!Array.isArray(targets)) throw new Error(`Targets must be an array`);
@@ -104,7 +115,11 @@ export class SDK {
     };
   }
 
-  public depositTokens(from: string, to: string, tokens: Token[]): Promise<TransactionReceipt> {
+  public async depositTokens(
+    from: string,
+    to: string,
+    tokens: Token[]
+  ): Promise<TransactionReceipt> {
     this.#verifyIsNotReadOnly();
     if (!isAddress(from)) throw new Error(`Invalid from address ${from}`);
     if (!isAddress(to)) throw new Error(`Invalid to address ${to}`);
@@ -142,23 +157,27 @@ export class SDK {
     for (const token of tokens) {
       if (!isAddress(token.address)) throw new Error(`Invalid token address ${token.address}`);
       if (!isValidTokenStandard(token.standard))
-        throw new Error(`Invalid token standard ${token.standard}`);
+        throw new Error(`Invalid token standard ${token.standard} for token ${token.address}`);
 
       const tokenStandard = token.standard.toUpperCase();
       switch (tokenStandard) {
         case TokenStandards.ERC20:
-          if (!token.amount) throw new Error(`ERC20 token ${token.address} must have an amount`);
+          if (token.amount === undefined || !isNonNegativeEther(token.amount))
+            throw new Error(`ERC20 token ${token.address} must have a valid amount`);
+          erc20Data.amounts.push(parseEther(token.amount));
           erc20Data.addresses.push(token.address);
-          erc20Data.amounts.push(token.amount);
           break;
         case TokenStandards.ERC721:
-          if (!token.id) throw new Error(`ERC721 token ${token.address} must have a token id`);
+          if (token.id === undefined || !isValidAmount(token.id))
+            throw new Error(`ERC721 token ${token.address} must have a valid token id`);
           erc721Data.addresses.push(token.address);
           erc721Data.ids.push(token.id);
           break;
         case TokenStandards.ERC1155:
-          if (!token.id) throw new Error(`ERC1155 token ${token.address} must have a token id`);
-          if (!token.amount) throw new Error(`ERC1155 token ${token.address} must have an amount`);
+          if (token.id === undefined || !isValidAmount(token.id))
+            throw new Error(`ERC1155 token ${token.address} must have a valid token id`);
+          if (token.amount === undefined || !isValidAmount(token.amount))
+            throw new Error(`ERC1155 token ${token.address} must have a valid amount`);
           if (token.data && typeof token.data !== 'string')
             throw new Error(`ERC1155 token ${token.address} data must be a string`);
 
@@ -215,6 +234,172 @@ export class SDK {
     return executeTransaction({
       signerOrProvider: this.signerOrProvider,
       contract: baseVault,
+      method: 'multicall',
+      args: [encodedData]
+    });
+  }
+
+  public async redeem(vaultAddress: string): Promise<TransactionReceipt> {
+    this.#verifyIsNotReadOnly();
+    if (!isAddress(vaultAddress)) throw new Error(`Invalid vault address ${vaultAddress}`);
+
+    // FERC1155 Contract
+    const ferc1155ABI = Contracts.FERC1155.ABI;
+    const ferc1155Address = Contracts.FERC1155.address[this.chainId];
+    const ferc1155 = new Contract(ferc1155Address, ferc1155ABI, this.signerOrProvider);
+
+    // Buyout Module Contract
+    const buyoutModuleABI = Contracts.Buyout.ABI;
+    const buyoutModuleAddress = Contracts.Buyout.address[this.chainId];
+    const buyoutModule = new Contract(buyoutModuleAddress, buyoutModuleABI, this.signerOrProvider);
+
+    // Validate buyout state
+    const buyoutInfo: { state: number } = await buyoutModule.functions.buyoutInfo(vaultAddress);
+    if (!buyoutInfo) throw new Error(`Vault ${vaultAddress} does not exist`);
+    if (buyoutInfo.state === AuctionState.live)
+      throw new Error(`Cannot redeem tokens during a an active buyout`);
+    if (buyoutInfo.state === AuctionState.success)
+      throw new Error(`Cannot redeem tokens from a closed vault`);
+
+    // Get proofs
+    const proofs = await getProofsByAddress(vaultAddress, this.signerOrProvider);
+    const burnProof = proofs[1];
+
+    // Get signature
+    const signature = await getPermitSignature(
+      buyoutModuleAddress,
+      ferc1155,
+      this.signerOrProvider
+    );
+
+    const selfPermitAllData = buyoutModule.interface.encodeFunctionData('selfPermitAll', [
+      ferc1155Address,
+      signature.approved,
+      signature.deadline,
+      signature.v,
+      signature.r,
+      signature.s
+    ]);
+
+    const redeemData = buyoutModule.interface.encodeFunctionData('redeem', [
+      vaultAddress,
+      burnProof
+    ]);
+
+    const encodedData = [selfPermitAllData, redeemData];
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: buyoutModule,
+      method: 'multicall',
+      args: [encodedData]
+    });
+  }
+
+  public async startAuction(vaultAddress: string, amount: string): Promise<TransactionReceipt> {
+    this.#verifyIsNotReadOnly();
+
+    if (!isAddress(vaultAddress)) throw new Error(`Vault address ${vaultAddress} is not valid`);
+    if (!isNonNegativeEther(amount))
+      throw new Error(`Amount must be greater than or equal to zero`);
+
+    // FERC1155 Contract
+    const ferc1155 = new FERC1155({
+      signerOrProvider: this.signerOrProvider,
+      chainId: this.chainId
+    });
+
+    // Buyout Module Contract
+    const buyoutModule = new Buyout({
+      signerOrProvider: this.signerOrProvider,
+      chainId: this.chainId
+    });
+
+    // Validate that vault is not already live or closed
+    const buyoutInfo = await buyoutModule.buyoutInfo(vaultAddress);
+    if (!buyoutInfo) throw new Error(`Vault ${vaultAddress} does not exist`);
+    if (buyoutInfo.state === AuctionState.live)
+      throw new Error(`There is already an active buyout for this vault`);
+    if (buyoutInfo.state === AuctionState.success)
+      throw new Error(`Cannot start a buyout auction on a closed vault`);
+
+    // Validate that user has sufficient balance
+    const wallet = await getCurrentWallet(this.signerOrProvider);
+    if (wallet.balance.lte(parseEther(amount))) {
+      throw new Error(
+        `Insufficient funds. Auction bid is ${amount} ETH. Your balance is ${wallet.balance.toString()} ETH.`
+      );
+    }
+
+    // Validate that user has more than zero tokens and less than the total supply
+    const vaultId = await getVaultId(vaultAddress, this.signerOrProvider);
+    const balance = await ferc1155.balanceOf(wallet.address, vaultId);
+    const totalSupply = await ferc1155.totalSupply(vaultId);
+
+    if (balance.isZero()) {
+      throw new Error(`You don't own any tokens from this vault`);
+    }
+
+    if (balance.eq(totalSupply)) {
+      throw new Error(`Cannot start a buyout auction if you own all the tokens`);
+    }
+
+    // Check approval status. If not approved, approve the token.
+    const isApprovedForAll = await ferc1155.isApprovedForAll(wallet.address, buyoutModule.address);
+    if (!isApprovedForAll) {
+      await ferc1155.setApprovalForAll(buyoutModule.address, true);
+    }
+
+    return buyoutModule.start(vaultAddress, amount);
+  }
+
+  public async endAuction(vaultAddress: string): Promise<TransactionReceipt> {
+    this.#verifyIsNotReadOnly();
+    if (!isAddress(vaultAddress)) throw new Error(`Vault address ${vaultAddress} is not valid`);
+
+    // FERC1155 Contract
+    const ferc1155ABI = Contracts.FERC1155.ABI;
+    const ferc1155Address = Contracts.FERC1155.address[this.chainId];
+    const ferc1155 = new Contract(ferc1155Address, ferc1155ABI, this.signerOrProvider);
+
+    // Buyout Module Contract
+    const buyoutModuleABI = Contracts.Buyout.ABI;
+    const buyoutModuleAddress = Contracts.Buyout.address[this.chainId];
+    const buyoutModule = new Contract(buyoutModuleAddress, buyoutModuleABI, this.signerOrProvider);
+
+    // Validate buyout state
+    const buyoutInfo: { state: number } = await buyoutModule.functions.buyoutInfo(vaultAddress);
+    if (!buyoutInfo) throw new Error(`Vault ${vaultAddress} does not exist`);
+    if (buyoutInfo.state === AuctionState.inactive) throw new Error(`Buyout auction is not active`);
+    if (buyoutInfo.state === AuctionState.success)
+      throw new Error(`Buyout auction is already closed`);
+
+    // Get proofs
+    const proofs = await getProofsByAddress(vaultAddress, this.signerOrProvider);
+    const burnProof = proofs[1];
+
+    const signature = await getPermitSignature(
+      buyoutModuleAddress,
+      ferc1155,
+      this.signerOrProvider
+    );
+
+    const selfPermitAllData = buyoutModule.interface.encodeFunctionData('selfPermitAll', [
+      ferc1155Address,
+      signature.approved,
+      signature.deadline,
+      signature.v,
+      signature.r,
+      signature.s
+    ]);
+
+    const endData = buyoutModule.interface.encodeFunctionData('end', [vaultAddress, burnProof]);
+
+    const encodedData = [selfPermitAllData, endData];
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: buyoutModule,
       method: 'multicall',
       args: [encodedData]
     });
