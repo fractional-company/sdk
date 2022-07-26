@@ -14,7 +14,7 @@ interface FERC1155Config {
 export class FERC1155 {
   public address: string;
   private isReadOnly: boolean;
-  private ferc1155: Contract;
+  public ferc1155: Contract;
   private signerOrProvider: Signer | Provider;
 
   constructor({ signerOrProvider, chainId = Chains.Mainnet }: FERC1155Config) {

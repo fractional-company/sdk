@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { Signer, Contract } from 'ethers';
+import { Signer, Contract, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
 import { TransactionReceipt } from '@ethersproject/providers';
 import { isAddress, parseEther } from 'ethers/lib/utils';
-import { isValidChain, isNonNegativeEther, executeTransaction } from '../utils';
+import { isValidChain, isNonNegativeEther, executeTransaction, isValidAmount } from '../utils';
 import { BuyoutInfo, Permission } from '../types/types';
 import { Chains, Contracts } from '../common';
 
@@ -14,7 +14,7 @@ interface Arguments {
 
 export class Buyout {
   public address: string;
-  private buyout: Contract;
+  public buyout: Contract;
   private isReadOnly: boolean;
   private signerOrProvider: Signer | Provider;
 
@@ -27,6 +27,16 @@ export class Buyout {
     this.buyout = new Contract(address, ABI, signerOrProvider);
     this.isReadOnly = !Signer.isSigner(signerOrProvider);
     this.signerOrProvider = signerOrProvider;
+  }
+
+  public async PROPOSAL_PERIOD(): Promise<BigNumber> {
+    const response: [BigNumber] = await this.buyout.functions.PROPOSAL_PERIOD();
+    return response[0];
+  }
+
+  public async REJECTION_PERIOD(): Promise<BigNumber> {
+    const response: [BigNumber] = await this.buyout.functions.REJECTION_PERIOD();
+    return response[0];
   }
 
   public async buyoutInfo(vaultAddress: string): Promise<BuyoutInfo> {
@@ -71,6 +81,21 @@ export class Buyout {
       options: {
         value: parseEther(amount)
       }
+    });
+  }
+
+  public async sellFractions(vaultAddress: string, amount: string): Promise<TransactionReceipt> {
+    this.#verifyIsNotReadOnly();
+
+    if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
+    if (!isValidAmount(amount))
+      throw new Error(`Fractions amount must be an integer greater than or equal to zero`);
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.buyout,
+      method: 'sellFractions',
+      args: [vaultAddress, amount]
     });
   }
 

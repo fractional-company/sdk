@@ -414,6 +414,89 @@ export class SDK {
     });
   }
 
+  public async sellFractions(vaultAddress: string, amount: string): Promise<TransactionReceipt> {
+    this.#verifyIsNotReadOnly();
+
+    if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
+    if (!isValidAmount(amount))
+      throw new Error(`Fractions amount must be an integer greater than or equal to zero`);
+
+    const buyoutModule = new Buyout({
+      signerOrProvider: this.signerOrProvider,
+      chainId: this.chainId
+    });
+
+    const ferc1155 = new FERC1155({
+      signerOrProvider: this.signerOrProvider,
+      chainId: this.chainId
+    });
+
+    // Validate that vault has a live auction
+    const buyoutInfo = await buyoutModule.buyoutInfo(vaultAddress);
+    if (!buyoutInfo) throw new Error(`Vault ${vaultAddress} does not exist`);
+    if (buyoutInfo.state !== AuctionState.live) {
+      throw new Error(`Fractions can only be sold during a live auction`);
+    }
+
+    // Validate that proposal period is still active
+    const rejectionPeriod = await buyoutModule.PROPOSAL_PERIOD();
+    const rejectionPeriodEnd = rejectionPeriod.add(buyoutInfo.startTime);
+    const now = Math.floor(Date.now() / 1000);
+    if (now >= rejectionPeriodEnd.toNumber()) {
+      throw new Error(`Cannot sell fractions after the proposal period has ended`);
+    }
+
+    // Validate that user has sufficient balance
+    const wallet = await getCurrentWallet(this.signerOrProvider);
+    const vaultId = await getVaultId(vaultAddress, this.signerOrProvider);
+    const balance = await ferc1155.balanceOf(wallet.address, vaultId);
+    if (balance.isZero()) {
+      throw new Error(`You don't own any tokens from this vault`);
+    }
+
+    if (balance.lt(amount)) {
+      throw new Error(`Amount of fractions to sell is greater than your balance`);
+    }
+
+    // Validate that buyout module has permission to transfer tokens. If not, use permit to allow it.
+    const isApprovedForAll = await ferc1155.isApprovedForAll(wallet.address, buyoutModule.address);
+    if (isApprovedForAll) {
+      return buyoutModule.sellFractions(vaultAddress, amount);
+    }
+
+    const ferc1155Contract = ferc1155.ferc1155;
+    const buyoutContract = buyoutModule.buyout;
+
+    const signature = await getPermitSignature(
+      buyoutModule.address,
+      ferc1155Contract,
+      this.signerOrProvider
+    );
+
+    const selfPermitAllData = buyoutContract.interface.encodeFunctionData('selfPermitAll', [
+      ferc1155.address,
+      signature.approved,
+      signature.deadline,
+      signature.v,
+      signature.r,
+      signature.s
+    ]);
+
+    const sellFractionsData = buyoutContract.interface.encodeFunctionData('sellFractions', [
+      vaultAddress,
+      amount
+    ]);
+
+    const encodedData = [selfPermitAllData, sellFractionsData];
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: buyoutContract,
+      method: 'multicall',
+      args: [encodedData]
+    });
+  }
+
   // Private methods
   #verifyIsNotReadOnly(): void {
     if (this.isReadOnly) {
