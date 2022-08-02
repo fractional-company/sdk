@@ -42,15 +42,7 @@ export class Buyout {
   public async buyoutInfo(vaultAddress: string): Promise<BuyoutInfo> {
     if (!isAddress(vaultAddress)) throw new Error(`Vault address ${vaultAddress} is not valid`);
     const info: BuyoutInfo = await this.buyout.functions.buyoutInfo(vaultAddress);
-
-    return {
-      ethBalance: info.ethBalance,
-      fractionPrice: info.fractionPrice,
-      lastTotalSupply: info.lastTotalSupply,
-      proposer: info.proposer,
-      startTime: info.startTime,
-      state: info.state
-    };
+    return info;
   }
 
   public async getLeafNodes(): Promise<string[]> {
@@ -95,6 +87,21 @@ export class Buyout {
       signerOrProvider: this.signerOrProvider,
       contract: this.buyout,
       method: 'sellFractions',
+      args: [vaultAddress, amount]
+    });
+  }
+
+  public async buyFractions(vaultAddress: string, amount: string): Promise<TransactionReceipt> {
+    this.#verifyIsNotReadOnly();
+
+    if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
+    if (!isValidAmount(amount))
+      throw new Error(`Fractions amount must be an integer greater than or equal to zero`);
+
+    return executeTransaction({
+      signerOrProvider: this.signerOrProvider,
+      contract: this.buyout,
+      method: 'buyFractions',
       args: [vaultAddress, amount]
     });
   }

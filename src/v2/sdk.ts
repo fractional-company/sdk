@@ -21,7 +21,7 @@ import {
 export class SDK {
   public readonly chainId: number;
   public readonly isReadOnly: boolean;
-  private signerOrProvider: Signer | Provider;
+  private readonly signerOrProvider: Signer | Provider;
 
   constructor({
     signerOrProvider,
@@ -439,10 +439,10 @@ export class SDK {
     }
 
     // Validate that proposal period is still active
-    const rejectionPeriod = await buyoutModule.PROPOSAL_PERIOD();
-    const rejectionPeriodEnd = rejectionPeriod.add(buyoutInfo.startTime);
+    const proposalPeriod = await buyoutModule.PROPOSAL_PERIOD();
+    const proposalPeriodEnd = proposalPeriod.add(buyoutInfo.startTime);
     const now = Math.floor(Date.now() / 1000);
-    if (now >= rejectionPeriodEnd.toNumber()) {
+    if (now >= proposalPeriodEnd.toNumber()) {
       throw new Error(`Cannot sell fractions after the proposal period has ended`);
     }
 
