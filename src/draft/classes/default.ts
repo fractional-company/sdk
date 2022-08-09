@@ -40,6 +40,7 @@ export default class Default extends Base {
     selectors?: string[];
   }): Promise<{
     vaultAddress: string;
+    vaultId: string;
     transactionHash: string;
   }> {
     this.verifyIsNotReadOnly();
@@ -97,8 +98,12 @@ export default class Default extends Base {
       connection: this.connection
     });
 
+    const vaultAddress = tx.logs[0].address;
+    const vaultId = await getVaultId(vaultAddress, this.variant, this.connection);
+
     return {
-      vaultAddress: tx.logs[0].address,
+      vaultAddress,
+      vaultId: vaultId,
       transactionHash: tx.transactionHash
     };
   }
