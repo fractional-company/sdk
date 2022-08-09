@@ -124,7 +124,7 @@ export const Contracts: ContractConstant = {
     [Variants.Default]: {
       address: {
         [Chains.Mainnet]: '0x0000000000000000000000000000000000000000',
-        [Chains.Rinkeby]: '0x9BA1Ec3f27FA46c42ba49ba76Bd082dD6DAFAA20'
+        [Chains.Rinkeby]: '0x19b3a1ed2836975A51a1744384117C7a696B8929'
       },
       ABI: defaultABI.vaultFactory
     },
