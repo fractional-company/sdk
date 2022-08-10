@@ -3,5 +3,18 @@
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "cSpell.words": ["etherplex", "ethersproject", "Numberish", "pooltogether"]
+  "cSpell.words": [
+    "etherplex",
+    "ethersproject",
+    "ferc",
+    "FERC",
+    "multicall",
+    "Nounlet",
+    "nounlets",
+    "Nounlets",
+    "Numberish",
+    "pooltogether",
+    "Sepolia",
+    "SEPOLIA"
+  ]
 }
