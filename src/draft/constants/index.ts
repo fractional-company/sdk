@@ -2,6 +2,7 @@ export * from './auction';
 export * from './chains';
 export * from './contracts';
 export * from './modules';
+export * from './other';
 export * from './proofs';
 export * from './targets';
 export * from './tokenStandards';
