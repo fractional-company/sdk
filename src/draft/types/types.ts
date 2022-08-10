@@ -27,12 +27,19 @@ export interface ContractConstant {
   };
 }
 
+export type TokenId = string | number;
+
 export interface Token {
   standard: string;
   address: string;
-  id?: BigNumberish;
+  id?: TokenId;
   amount?: string;
   data?: string[];
+}
+
+export interface TokenTransfer {
+  id: TokenId;
+  amount: BigNumberish;
 }
 
 export type Proof = string[][];

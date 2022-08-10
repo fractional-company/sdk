@@ -3,13 +3,14 @@ import { Connection, Options } from '../types/types';
 import { Contract, BigNumberish, BigNumber } from 'ethers';
 import { TransactionReceipt } from '@ethersproject/providers';
 import { isAddress, parseEther, formatEther } from 'ethers/lib/utils';
-import { Token, AuctionState } from '../types/types';
+import { Token, TokenId, TokenTransfer, AuctionState } from '../types/types';
 import {
   BuyoutInfo,
   ModulesContracts,
   TargetContracts,
   Contracts,
-  TokenStandards
+  TokenStandards,
+  NullAddress
 } from '../constants';
 import {
   isNonNegativeEther,
@@ -234,6 +235,92 @@ export default class Default extends Base {
     });
   }
 
+  public async transferTokens(
+    fromAddress: string,
+    toAddress: string,
+    tokenId: TokenId,
+    amount: BigNumberish,
+    data = '0x'
+  ): Promise<TransactionReceipt> {
+    if (!isAddress(fromAddress)) throw new Error('Invalid from address');
+    if (!isAddress(toAddress)) throw new Error('Invalid to address');
+    if (!isValidTokenId(tokenId)) throw new Error('Invalid token id');
+    if (!isValidAmount(amount)) throw new Error('Invalid amount');
+    if (data && typeof data !== 'string') throw new Error('Data must be a string');
+
+    // FERC1155 Contract
+    const ferc1155 = new Contract(
+      Contracts.FERC1155[this.variant].address[this.chainId],
+      Contracts.FERC1155[this.variant].ABI,
+      this.connection
+    );
+
+    const [balance]: [BigNumber] = await ferc1155.functions.balanceOf(fromAddress, tokenId);
+    if (balance.lt(amount)) throw new Error('Insufficient balance');
+
+    return executeTransaction({
+      connection: this.connection,
+      contract: ferc1155,
+      method: 'safeTransferFrom',
+      args: [fromAddress, toAddress, tokenId, amount, data]
+    });
+  }
+
+  public async transferTokensBatch(
+    fromAddress: string,
+    toAddress: string,
+    tokens: TokenTransfer[],
+    data = '0x'
+  ): Promise<TransactionReceipt> {
+    if (!isAddress(fromAddress)) throw new Error('Invalid from address');
+    if (!isAddress(toAddress)) throw new Error('Invalid to address');
+    if (!Array.isArray(tokens)) throw new Error('Tokens must be an array');
+    if (data && typeof data !== 'string') throw new Error('Data must be a string');
+
+    // FERC1155 Contract
+    const ferc1155 = new Contract(
+      Contracts.FERC1155[this.variant].address[this.chainId],
+      Contracts.FERC1155[this.variant].ABI,
+      this.connection
+    );
+
+    const tokensMapping: { [key: string]: BigNumberish } = {};
+
+    for (const token of tokens) {
+      if (typeof token !== 'object') throw new Error('Tokens must be an array of objects');
+      if (!isValidTokenId(token.id)) throw new Error(`Invalid token id ${token.id}`);
+      if (!isValidAmount(token.amount))
+        throw new Error(`Invalid amount ${String(token.amount)} for token ${token.id}`);
+
+      const tokenMappingAmount = tokensMapping[token.id];
+      if (tokenMappingAmount) {
+        tokensMapping[token.id] = BigNumber.from(tokenMappingAmount).add(token.amount).toString();
+      } else {
+        tokensMapping[token.id] = String(token.amount);
+      }
+    }
+
+    const tokenIds = Object.keys(tokensMapping);
+    const amounts = Object.values(tokensMapping);
+    const addressArray = Array(tokenIds.length).fill(fromAddress);
+    const [balances]: [BigNumber[]] = await ferc1155.functions.balanceOfBatch(
+      addressArray,
+      tokenIds
+    );
+
+    for (let i = 0; i < balances.length; i++) {
+      const balance = balances[i];
+      if (balance.lt(amounts[i])) throw new Error(`Insufficient balance for token ${tokenIds[i]}`);
+    }
+
+    return executeTransaction({
+      connection: this.connection,
+      contract: ferc1155,
+      method: 'safeBatchTransferFrom',
+      args: [fromAddress, toAddress, tokenIds, amounts, data]
+    });
+  }
+
   public async getTokenBalance(walletAddress: string, vaultAddressOrId: string): Promise<string> {
     if (!isAddress(walletAddress)) throw new Error(`Invalid wallet address ${walletAddress}`);
 
@@ -352,6 +439,64 @@ export default class Default extends Base {
       endTime: endTime, // timestamp (ms)
       state: AuctionState[buyoutInfo.state] // string
     };
+  }
+
+  public async getVaultOwners(vaultAddress: string): Promise<
+    {
+      address: string;
+      balance: string;
+    }[]
+  > {
+    if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
+    const vaultId = await getVaultId(vaultAddress, this.variant, this.connection);
+    if (vaultId === '0') return []; // no vault exists with this address
+
+    // FERC1155 Contract
+    const ferc1155ABI = Contracts.FERC1155[this.variant].ABI;
+    const ferc1155Address = Contracts.FERC1155[this.variant].address[this.chainId];
+    const ferc1155 = new Contract(ferc1155Address, ferc1155ABI, this.connection);
+
+    const [eventsSingle, eventBatch] = await Promise.all([
+      ferc1155.queryFilter(ferc1155.filters.TransferSingle()),
+      ferc1155.queryFilter(ferc1155.filters.TransferBatch())
+    ]);
+
+    const ownersMapping: { [key: string]: true } = {};
+
+    for (const e of eventBatch) {
+      const toAddress: string = e.args?.to;
+      if (!toAddress || toAddress === NullAddress) continue;
+
+      if (!ownersMapping[toAddress]) {
+        ownersMapping[toAddress] = true;
+      }
+    }
+
+    for (const e of eventsSingle) {
+      const toAddress: string = e.args?.to;
+      if (!toAddress || toAddress === NullAddress) continue;
+
+      if (!ownersMapping[toAddress]) {
+        ownersMapping[toAddress] = true;
+      }
+    }
+
+    const owners = Object.keys(ownersMapping);
+    const ids = Array(owners.length).fill(vaultId);
+    const [balances]: [BigNumber[]] = await ferc1155.functions.balanceOfBatch(owners, ids);
+
+    const nonZeroOwners: { address: string; balance: string }[] = [];
+    for (let i = 0; i < balances.length; i++) {
+      const balance = balances[i];
+      if (balance.isZero()) continue;
+
+      nonZeroOwners.push({
+        address: owners[i],
+        balance: balance.toString()
+      });
+    }
+
+    return nonZeroOwners;
   }
 
   public async cashProceeds(vaultAddress: string): Promise<TransactionReceipt> {
