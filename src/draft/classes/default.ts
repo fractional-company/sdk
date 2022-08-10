@@ -15,6 +15,7 @@ import {
   isNonNegativeEther,
   isValidAmount,
   isValidTokenStandard,
+  isValidTokenId,
   executeTransaction,
   getCurrentWallet,
   getPermitSignature,
@@ -233,23 +234,60 @@ export default class Default extends Base {
     });
   }
 
-  public async getAuctionInfo(vaultAddress: string): Promise<{
-    proposalPeriodDays: number;
-    rejectionPeriodDays: number;
-    proposalPeriodEnd: number;
-    rejectionPeriodEnd: number;
-    ethBalance: string;
-    fractionPrice: string;
-    supply: string;
-    supplyInPool: string;
-    supplyOutsidePool: string;
-    supplyPercentageInPool: string;
-    supplyPercentageOutsidePool: string;
-    proposer: string | null;
-    startTime: number;
-    endTime: number;
-    state: string;
-  }> {
+  public async getTokenBalance(walletAddress: string, vaultAddressOrId: string): Promise<string> {
+    if (!isAddress(walletAddress)) throw new Error(`Invalid wallet address ${walletAddress}`);
+
+    const isVaultId = isValidTokenId(vaultAddressOrId);
+    const isVaultAddress = isAddress(vaultAddressOrId);
+    if (!isVaultId && !isVaultAddress)
+      throw new Error(`Invalid vault address or id ${vaultAddressOrId}`);
+
+    // FERC1155 Contract
+    const ferc1155ABI = Contracts.FERC1155[this.variant].ABI;
+    const ferc1155Address = Contracts.FERC1155[this.variant].address[this.chainId];
+    const ferc1155 = new Contract(ferc1155Address, ferc1155ABI, this.connection);
+
+    let vaultId = '';
+    if (isVaultAddress) {
+      vaultId = await getVaultId(vaultAddressOrId, this.variant, this.connection);
+    } else {
+      vaultId = vaultAddressOrId;
+    }
+
+    const [balance]: [BigNumber] = await ferc1155.functions.balanceOf(walletAddress, vaultId);
+    return balance.toString();
+  }
+
+  public async getVaultInfo(vaultAddress: string): Promise<VaultInfo> {
+    if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
+
+    // FERC1155 Contract
+    const ferc1155ABI = Contracts.FERC1155[this.variant].ABI;
+    const ferc1155Address = Contracts.FERC1155[this.variant].address[this.chainId];
+    const ferc1155 = new Contract(ferc1155Address, ferc1155ABI, this.connection);
+
+    let uri: string | null;
+    try {
+      const uriResponse: [string] = await ferc1155.functions.uri(48);
+      uri = uriResponse[0];
+    } catch (e) {
+      uri = null;
+    }
+
+    const vaultId = await getVaultId(vaultAddress, this.variant, this.connection);
+    const [totalSupply]: [BigNumber] = await ferc1155.functions.totalSupply(vaultId);
+    const auctionInfo = await this.getAuctionInfo(vaultAddress);
+
+    return {
+      id: vaultId,
+      address: vaultAddress,
+      totalSupply: totalSupply.toString(),
+      uri,
+      auctionInfo
+    };
+  }
+
+  public async getAuctionInfo(vaultAddress: string): Promise<AuctionInfo> {
     if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
 
     const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -314,6 +352,46 @@ export default class Default extends Base {
       endTime: endTime, // timestamp (ms)
       state: AuctionState[buyoutInfo.state] // string
     };
+  }
+
+  public async cashProceeds(vaultAddress: string): Promise<TransactionReceipt> {
+    if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
+
+    // Buyout Module Contract
+    const buyoutModuleABI = Contracts.Buyout[this.variant].ABI;
+    const buyoutModuleAddress = Contracts.Buyout[this.variant].address[this.chainId];
+    const buyoutModule = new Contract(buyoutModuleAddress, buyoutModuleABI, this.connection);
+
+    // FERC1155 Contract
+    const ferc1155ABI = Contracts.FERC1155[this.variant].ABI;
+    const ferc1155Address = Contracts.FERC1155[this.variant].address[this.chainId];
+    const ferc1155 = new Contract(ferc1155Address, ferc1155ABI, this.connection);
+
+    // Auction state must be 'successful'
+    const buyoutInfo: { state: number } = await buyoutModule.functions.buyoutInfo(vaultAddress);
+    if (buyoutInfo.state !== AuctionState.success) {
+      throw new Error('Auction must be successful in order to cash proceeds');
+    }
+
+    // Caller must have token balance > 0
+    const wallet = await getCurrentWallet(this.connection);
+    const vaultId = await getVaultId(vaultAddress, this.variant, this.connection);
+    const [balance]: [BigNumber] = await ferc1155.functions.balanceOf(wallet.address, vaultId);
+
+    if (balance.isZero()) {
+      throw new Error('No balance in vault');
+    }
+
+    // Get burn proof
+    const proofs = await getProofsByAddress(vaultAddress, this.variant, this.connection);
+    const burnProof = proofs[1];
+
+    return executeTransaction({
+      contract: buyoutModule,
+      method: 'cash',
+      args: [vaultAddress, burnProof],
+      connection: this.connection
+    });
   }
 
   public async redeem(vaultAddress: string): Promise<TransactionReceipt> {
@@ -673,4 +751,30 @@ export default class Default extends Base {
       }
     });
   }
+}
+
+interface AuctionInfo {
+  proposalPeriodDays: number;
+  rejectionPeriodDays: number;
+  proposalPeriodEnd: number;
+  rejectionPeriodEnd: number;
+  ethBalance: string;
+  fractionPrice: string;
+  supply: string;
+  supplyInPool: string;
+  supplyOutsidePool: string;
+  supplyPercentageInPool: string;
+  supplyPercentageOutsidePool: string;
+  proposer: string | null;
+  startTime: number;
+  endTime: number;
+  state: string;
+}
+
+interface VaultInfo {
+  address: string;
+  id: string;
+  totalSupply: string;
+  uri: string | null;
+  auctionInfo: AuctionInfo;
 }

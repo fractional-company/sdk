@@ -16,10 +16,6 @@ export async function getVaultId(
 
   const { ABI, address } = Contracts.VaultRegistry[variant];
   const vaultRegistry = new Contract(address[chainId], ABI, connection);
-
-  const events = await vaultRegistry.queryFilter(vaultRegistry.filters.VaultDeployed(vaultAddress));
-  if (events.length === 0) throw new Error(`Vault ${vaultAddress} does not exist`);
-
-  const id: BigNumber = events[0]?.args?._id;
-  return id.toString();
+  const response: [string, BigNumber] = await vaultRegistry.functions.vaultToToken(vaultAddress);
+  return response[1].toString();
 }

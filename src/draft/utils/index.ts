@@ -8,4 +8,5 @@ export * from './isNonNegativeEther';
 export * from './isValidAmount';
 export * from './isValidChain';
 export * from './isValidConnection';
+export * from './isValidTokenId';
 export * from './isValidTokenStandard';
