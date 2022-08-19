@@ -3,5 +3,6 @@ describe('Blocks integration tests', () => {
     // todo: implement
     const x = { foo: 'bar' };
     const y = 'bar';
+    const z = x.foo;
   });
 });
