@@ -4,11 +4,16 @@
   "description": "Fractional SDK",
   "keywords": [
     "ethereum",
+    "blockchain",
     "crypto",
     "fractional",
+    "tessera",
     "nft",
     "sdk",
-    "sdk-js"
+    "sdk-js",
+    "erc20",
+    "erc721",
+    "erc1155"
   ],
   "repository": {
     "type": "git",
@@ -32,7 +37,7 @@
     "node": ">=16.0"
   },
   "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -43,6 +48,7 @@
     "dev": "tsc --watch",
     "lint": "eslint . --ext .ts --fix",
     "prepare": "husky install",
+    "prepublishOnly": "npm run build",
     "semantic-release": "semantic-release",
     "test:watch": "jest --watch",
     "test": "jest --coverage",
@@ -58,13 +64,11 @@
   },
   "dependencies": {
     "@fractional-company/common": "^0.0.71",
-    "ethers": "^5.6.8",
-    "ts-jest": "^28.0.4"
+    "ethers": "^5.6.8"
   },
   "devDependencies": {
     "@ryansonshine/commitizen": "^4.2.8",
     "@ryansonshine/cz-conventional-changelog": "^3.3.4",
-    "@types/date-fns": "^2.6.0",
     "@types/jest": "^26.0.24",
     "@types/node": "^12.20.11",
     "@typescript-eslint/eslint-plugin": "^4.22.0",
@@ -76,6 +80,7 @@
     "jest": "^28.1.1",
     "lint-staged": "^10.5.4",
     "semantic-release": "^19.0.2",
+    "ts-jest": "^28.0.4",
     "ts-node": "^10.2.1",
     "typescript": "^4.7.4"
   }
