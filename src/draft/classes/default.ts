@@ -1,29 +1,28 @@
-import Base from './base';
-import { Connection, Options } from '../types/types';
-import { Contract, BigNumberish, BigNumber } from 'ethers';
 import { TransactionReceipt } from '@ethersproject/providers';
-import { isAddress, parseEther, formatEther } from 'ethers/lib/utils';
-import { Token, TokenId, TokenTransfer, AuctionState } from '../types/types';
+import { BigNumber, BigNumberish, Contract } from 'ethers';
+import { formatEther, isAddress, parseEther } from 'ethers/lib/utils';
 import {
   BuyoutInfo,
-  ModulesContracts,
-  TargetContracts,
   Contracts,
-  TokenStandards,
-  NullAddress
+  ModulesContracts,
+  NullAddress,
+  TargetContracts,
+  TokenStandards
 } from '../constants';
+import { AuctionState, Connection, Options, Token, TokenId, TokenTransfer } from '../types/types';
 import {
-  isNonNegativeEther,
-  isValidAmount,
-  isValidTokenStandard,
-  isValidTokenId,
   executeTransaction,
   getCurrentWallet,
   getPermitSignature,
   getProofsByAddress,
   getProofsByModules,
-  getVaultId
+  getVaultId,
+  isNonNegativeEther,
+  isValidAmount,
+  isValidTokenId,
+  isValidTokenStandard
 } from '../utils';
+import Base from './base';
 
 export default class Default extends Base {
   constructor(connection: Connection, options: Options) {
