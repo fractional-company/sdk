@@ -1,9 +1,8 @@
-import { Connection } from './../types/types';
-import { Contract, BigNumber } from 'ethers';
 import { isAddress } from '@ethersproject/address';
-import { isValidChain, getChainId } from './index';
-import { Contracts } from '../constants';
-import { Variants } from '../constants';
+import { BigNumber, Contract } from 'ethers';
+import { Contracts, Variants } from '../constants';
+import { Connection } from '../types/types';
+import { getChainId, isValidChain } from './index';
 
 export async function getVaultId(
   vaultAddress: string,

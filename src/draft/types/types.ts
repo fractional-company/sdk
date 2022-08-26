@@ -1,5 +1,5 @@
-import { BigNumberish, Signer } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
+import { BigNumberish, Signer } from 'ethers';
 import { Chains, Variants } from '../constants';
 
 export type Connection = Signer | Provider;
@@ -43,9 +43,3 @@ export interface TokenTransfer {
 }
 
 export type Proof = string[][];
-
-export enum AuctionState {
-  inactive = 0,
-  live = 1,
-  success = 2
-}

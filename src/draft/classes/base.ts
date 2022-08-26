@@ -1,9 +1,9 @@
 import { Signer } from 'ethers';
-import { Variants } from '../constants';
+import { Chains, Variants } from '../constants';
 import { Connection, Options } from '../types/types';
 
 export default class Base {
-  public readonly chainId: number;
+  public readonly chainId: Chains;
   public readonly variant: Variants;
   public readonly isReadOnly: boolean;
   public readonly connection: Connection;

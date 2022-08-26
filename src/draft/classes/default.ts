@@ -2,6 +2,7 @@ import { TransactionReceipt } from '@ethersproject/providers';
 import { BigNumber, BigNumberish, Contract } from 'ethers';
 import { formatEther, isAddress, parseEther } from 'ethers/lib/utils';
 import {
+  AuctionState,
   BuyoutInfo,
   Contracts,
   ModulesContracts,
@@ -9,7 +10,7 @@ import {
   TargetContracts,
   TokenStandards
 } from '../constants';
-import { AuctionState, Connection, Options, Token, TokenId, TokenTransfer } from '../types/types';
+import { Connection, Options, Token, TokenId, TokenTransfer } from '../types/types';
 import {
   executeTransaction,
   getCurrentWallet,
@@ -234,13 +235,109 @@ export default class Default extends Base {
     });
   }
 
-  public async transferTokens(
+  public async withdrawTokens(
+    vaultAddress: string,
+    tokens: WithdrawToken[]
+  ): Promise<TransactionReceipt> {
+    this.verifyIsNotReadOnly();
+
+    if (!isAddress(vaultAddress)) throw new Error(`Invalid vault address ${vaultAddress}`);
+    if (!Array.isArray(tokens)) throw new Error('Tokens must be an array');
+    if (tokens.length === 0) throw new Error('Tokens array cannot be empty');
+
+    // Buyout Module Contract
+    const buyoutModuleABI = Contracts.Buyout[this.variant].ABI;
+    const buyoutModuleAddress = Contracts.Buyout[this.variant].address[this.chainId];
+    const buyoutModule = new Contract(buyoutModuleAddress, buyoutModuleABI, this.connection);
+
+    const proofs = await getProofsByAddress(vaultAddress, this.variant, this.connection);
+    const erc20TransferProof = proofs[2];
+    const erc721TransferProof = proofs[3];
+    const erc1155TransferProof = proofs[4];
+
+    const buyoutInfo: { state: number } = await buyoutModule.functions.buyoutInfo(vaultAddress);
+    if (buyoutInfo.state !== AuctionState.success) {
+      throw new Error(`Tokens can only be withdrawn after the auction is successful`);
+    }
+    const encodedData: string[] = [];
+
+    for (const token of tokens) {
+      if (!isAddress(token.address)) throw new Error(`Invalid token address ${token.address}`);
+      if (!isAddress(token.receiver)) throw new Error(`Invalid receiver address ${token.receiver}`);
+      if (!isValidTokenStandard(token.standard))
+        throw new Error(`Invalid token standard ${token.standard}`);
+
+      const tokenStandard = token.standard.toUpperCase();
+      switch (tokenStandard) {
+        case TokenStandards.ERC20:
+          if (token.amount === undefined || !isNonNegativeEther(token.amount)) {
+            throw new Error(`ERC20 token ${token.address} must have a valid amount`);
+          }
+          encodedData.push(
+            buyoutModule.interface.encodeFunctionData('withdrawERC20', [
+              vaultAddress,
+              token.address,
+              token.receiver,
+              parseEther(token.amount),
+              erc20TransferProof
+            ])
+          );
+
+          break;
+        case TokenStandards.ERC721:
+          if (token.id === undefined || !isValidAmount(token.id)) {
+            throw new Error(`ERC721 token ${token.address} must have a valid token id`);
+          }
+          encodedData.push(
+            buyoutModule.interface.encodeFunctionData('withdrawERC721', [
+              vaultAddress,
+              token.address,
+              token.receiver,
+              token.id,
+              erc721TransferProof
+            ])
+          );
+          break;
+        case TokenStandards.ERC1155:
+          if (token.id === undefined || !isValidAmount(token.id)) {
+            throw new Error(`ERC1155 token ${token.address} must have a valid token id`);
+          }
+          if (token.amount === undefined || !isValidAmount(token.amount)) {
+            throw new Error(`ERC1155 token ${token.address} must have a valid amount`);
+          }
+          encodedData.push(
+            buyoutModule.interface.encodeFunctionData('withdrawERC1155', [
+              vaultAddress,
+              token.address,
+              token.receiver,
+              token.id,
+              token.amount,
+              erc1155TransferProof
+            ])
+          );
+          break;
+        default:
+          throw new Error(`Invalid token standard ${tokenStandard}`);
+      }
+    }
+
+    return executeTransaction({
+      contract: buyoutModule,
+      method: 'multicall',
+      args: [encodedData],
+      connection: this.connection
+    });
+  }
+
+  public async transferFractions(
     fromAddress: string,
     toAddress: string,
     tokenId: TokenId,
     amount: BigNumberish,
     data = '0x'
   ): Promise<TransactionReceipt> {
+    this.verifyIsNotReadOnly();
+
     if (!isAddress(fromAddress)) throw new Error('Invalid from address');
     if (!isAddress(toAddress)) throw new Error('Invalid to address');
     if (!isValidTokenId(tokenId)) throw new Error('Invalid token id');
@@ -265,12 +362,14 @@ export default class Default extends Base {
     });
   }
 
-  public async transferTokensBatch(
+  public async transferFractionsBatch(
     fromAddress: string,
     toAddress: string,
     tokens: TokenTransfer[],
     data = '0x'
   ): Promise<TransactionReceipt> {
+    this.verifyIsNotReadOnly();
+
     if (!isAddress(fromAddress)) throw new Error('Invalid from address');
     if (!isAddress(toAddress)) throw new Error('Invalid to address');
     if (!Array.isArray(tokens)) throw new Error('Tokens must be an array');
@@ -320,7 +419,10 @@ export default class Default extends Base {
     });
   }
 
-  public async getTokenBalance(walletAddress: string, vaultAddressOrId: string): Promise<string> {
+  public async getFractionsBalance(
+    walletAddress: string,
+    vaultAddressOrId: string
+  ): Promise<string> {
     if (!isAddress(walletAddress)) throw new Error(`Invalid wallet address ${walletAddress}`);
 
     const isVaultId = isValidTokenId(vaultAddressOrId);
@@ -344,7 +446,7 @@ export default class Default extends Base {
     return balance.toString();
   }
 
-  public async getVaultInfo(vaultAddress: string): Promise<VaultInfo> {
+  public async getVault(vaultAddress: string): Promise<VaultInfo> {
     if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
 
     // FERC1155 Contract
@@ -440,12 +542,7 @@ export default class Default extends Base {
     };
   }
 
-  public async getVaultOwners(vaultAddress: string): Promise<
-    {
-      address: string;
-      balance: string;
-    }[]
-  > {
+  public async getVaultOwners(vaultAddress: string): Promise<VaultOwner[]> {
     if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
     const vaultId = await getVaultId(vaultAddress, this.variant, this.connection);
     if (vaultId === '0') return []; // no vault exists with this address
@@ -499,6 +596,7 @@ export default class Default extends Base {
   }
 
   public async cashProceeds(vaultAddress: string): Promise<TransactionReceipt> {
+    this.verifyIsNotReadOnly();
     if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
 
     // Buyout Module Contract
@@ -538,7 +636,7 @@ export default class Default extends Base {
     });
   }
 
-  public async redeem(vaultAddress: string): Promise<TransactionReceipt> {
+  public async redeemTokens(vaultAddress: string): Promise<TransactionReceipt> {
     this.verifyIsNotReadOnly();
     if (!isAddress(vaultAddress)) throw new Error(`Invalid vault address ${vaultAddress}`);
 
@@ -685,6 +783,7 @@ export default class Default extends Base {
 
   public async endAuction(vaultAddress: string): Promise<TransactionReceipt> {
     this.verifyIsNotReadOnly();
+
     if (!isAddress(vaultAddress)) throw new Error(`Vault address ${vaultAddress} is not valid`);
 
     // FERC1155 Contract
@@ -897,7 +996,9 @@ export default class Default extends Base {
   }
 }
 
-interface AuctionInfo {
+// Typescript Interfaces
+
+export interface AuctionInfo {
   proposalPeriodDays: number;
   rejectionPeriodDays: number;
   proposalPeriodEnd: number;
@@ -915,10 +1016,23 @@ interface AuctionInfo {
   state: string;
 }
 
-interface VaultInfo {
+export interface VaultInfo {
   address: string;
   id: string;
   totalSupply: string;
   uri: string | null;
   auctionInfo: AuctionInfo;
+}
+
+export interface VaultOwner {
+  address: string;
+  balance: string;
+}
+
+export interface WithdrawToken {
+  standard: string;
+  receiver: string;
+  address: string;
+  id?: BigNumberish;
+  amount?: string;
 }
