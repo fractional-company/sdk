@@ -10,14 +10,21 @@
     "ethersproject",
     "ferc",
     "FERC",
+    "lpda",
+    "LPDA",
     "multicall",
     "Nounlet",
     "nounlets",
     "Nounlets",
     "Numberish",
     "pooltogether",
+    "protoform",
+    "protoforms",
+    "reconstitutions",
+    "ryansonshine",
     "Sepolia",
     "SEPOLIA",
+    "typechain",
     "typecheck"
   ]
 }
