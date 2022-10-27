@@ -1,4 +1,6 @@
+export * from './estimateTransactionGas';
 export * from './executeTransaction';
+export * from './formatError';
 export * from './getChainId';
 export * from './getContractAddress';
 export * from './getCurrentWallet';

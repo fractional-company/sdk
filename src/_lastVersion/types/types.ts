@@ -1,21 +1,14 @@
 import { Provider } from '@ethersproject/abstract-provider';
-import { BigNumberish, Signer } from 'ethers';
+import { Signer } from 'ethers';
 
 export type Connection = Signer | Provider;
 
 export type Proof = string[][];
 
-export type TokenId = string | number;
-
-export interface TokenTransfer {
-  id: TokenId;
-  amount: BigNumberish;
-}
-
-export interface Token {
-  standard: string;
-  address: string;
-  id?: TokenId;
-  amount?: string;
-  data?: string[];
+export interface GasData {
+  gasLimit: string;
+  gasPrice: string | null;
+  maxFeePerGas: string | null;
+  maxPriorityFeePerGas: string | null;
+  totalGasFee: string | null;
 }

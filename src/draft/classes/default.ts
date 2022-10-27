@@ -305,8 +305,9 @@ export default class Default extends Base {
           if (token.amount === undefined || !isValidAmount(token.amount)) {
             throw new Error(`ERC1155 token ${token.address} must have a valid amount`);
           }
+
           encodedData.push(
-            buyoutModule.interface.encodeFunctionData('withdrawERC1155', [
+            buyoutModule.interface.encodeFunctionData('batchWithdrawERC1155', [
               vaultAddress,
               token.address,
               token.receiver,
@@ -315,6 +316,7 @@ export default class Default extends Base {
               erc1155TransferProof
             ])
           );
+
           break;
         default:
           throw new Error(`Invalid token standard ${tokenStandard}`);

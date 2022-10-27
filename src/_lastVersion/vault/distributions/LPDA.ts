@@ -1,15 +1,14 @@
-import { TransactionReceipt } from '@ethersproject/providers';
+import { TransactionResponse } from '@ethersproject/providers';
 import { BigNumber, BigNumberish } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
 import { NullAddress, Proofs } from '../../constants';
 import { Contract } from '../../constants/contracts';
+import { LPDA as LPDAInterface, LPDA__factory as LPDAFactory } from '../../contracts';
+import { LPDA } from '../../contracts/LPDA';
 import {
-  LPDA as LPDAInterface,
-  LPDA__factory as LPDAFactory,
-  VaultRegistry__factory as VaultRegistryFactory
-} from '../../contracts';
-import {
+  estimateTransactionGas,
   executeTransaction,
+  formatError,
   getContractAddress,
   getCurrentWallet,
   isValidAmount
@@ -21,6 +20,16 @@ export enum LPDAState {
   Live = 'LIVE',
   Successful = 'SUCCESSFUL',
   NotSuccessful = 'NOT_SUCCESSFUL'
+}
+
+export enum LPDAEvents {
+  CreatedLPDA = 'CreatedLPDA',
+  BidEntered = 'BidEntered',
+  Refunded = 'Refunded',
+  MintedRaes = 'MintedRaes',
+  CuratorClaimed = 'CuratorClaimed',
+  FeeDispersed = 'FeeDispersed',
+  CuratorRedeemedNFT = 'CuratorRedeemedNFT'
 }
 
 export function LPDA<TBase extends Constructor>(Base: TBase) {
@@ -35,107 +44,32 @@ export function LPDA<TBase extends Constructor>(Base: TBase) {
       this.#contract = LPDAFactory.connect(this.#address, this.connection);
     }
 
-    // Write methods
+    // ======== Read Methods ========
 
-    public async enterBid(amount: BigNumberish): Promise<TransactionReceipt> {
-      this.verifyIsNotReadOnly();
+    public async getAuction() {
+      try {
+        const info = await this.#contract.vaultLPDAInfo(this.vaultAddress);
 
-      if (!isValidAmount(amount)) {
-        throw new Error('Invalid rae amount');
+        if (info.curator === NullAddress) {
+          throw new Error('Vault has no auction');
+        }
+
+        return {
+          startTime: info.startTime,
+          endTime: info.endTime,
+          dropPerSecond: info.dropPerSecond.toString(),
+          startPrice: info.startPrice.toString(),
+          endPrice: info.endPrice.toString(),
+          minBid: info.minBid.toString(),
+          supply: info.supply,
+          numSold: info.numSold,
+          curator: info.curator,
+          curatorClaimed: Boolean(info.curatorClaimed.toString())
+        };
+      } catch (e) {
+        throw new Error(formatError(e));
       }
-
-      const pricePerRae = await this.getCurrentPrice();
-      const totalValue = BigNumber.from(pricePerRae).mul(amount);
-
-      const { balance } = await getCurrentWallet(this.connection);
-      if (balance.lt(totalValue)) {
-        throw new Error('Insufficient balance');
-      }
-
-      return executeTransaction({
-        connection: this.connection,
-        contract: this.#contract,
-        method: 'enterBid',
-        args: [this.vaultAddress, amount],
-        options: { value: totalValue }
-      });
     }
-
-    public async redeemNft(
-      tokenAddress: string,
-      tokenId: BigNumberish
-    ): Promise<TransactionReceipt> {
-      this.verifyIsNotReadOnly();
-
-      const { curator } = await this.getInfo();
-      const wallet = await getCurrentWallet(this.connection);
-      if (wallet.address !== curator) {
-        throw new Error('Only the curator can redeem the NFT');
-      }
-
-      const { redeemProof } = Proofs[this.chainId];
-
-      return executeTransaction({
-        connection: this.connection,
-        contract: this.#contract,
-        method: 'redeemNFTCurator',
-        args: [this.vaultAddress, tokenAddress, tokenId, redeemProof]
-      });
-    }
-
-    public async settleAddress(minter?: string): Promise<TransactionReceipt> {
-      this.verifyIsNotReadOnly();
-
-      if (!minter) {
-        const wallet = await getCurrentWallet(this.connection);
-        minter = wallet.address;
-      }
-
-      if (minter && !isAddress(minter)) {
-        throw new Error('Invalid minter address');
-      }
-
-      return executeTransaction({
-        connection: this.connection,
-        contract: this.#contract,
-        method: 'settleAddress',
-        args: [this.vaultAddress, minter]
-      });
-    }
-
-    public async settleCurator(): Promise<TransactionReceipt> {
-      this.verifyIsNotReadOnly();
-
-      const { curator } = await this.getInfo();
-      const wallet = await getCurrentWallet(this.connection);
-      if (wallet.address !== curator) {
-        throw new Error('Only the curator can settle the auction');
-      }
-
-      return executeTransaction({
-        connection: this.connection,
-        contract: this.#contract,
-        method: 'settleCurator',
-        args: [this.vaultAddress]
-      });
-    }
-
-    public async updateFeeReceiver(receiver: string): Promise<TransactionReceipt> {
-      this.verifyIsNotReadOnly();
-
-      if (!isAddress(receiver)) {
-        throw new Error('Invalid receiver address');
-      }
-
-      return executeTransaction({
-        connection: this.connection,
-        contract: this.#contract,
-        method: 'updateFeeReceiver',
-        args: [receiver]
-      });
-    }
-
-    // Read methods
 
     public async getAuctionState(): Promise<LPDAState> {
       const state: {
@@ -147,8 +81,12 @@ export function LPDA<TBase extends Constructor>(Base: TBase) {
         3: LPDAState.NotSuccessful
       };
 
-      const currentState = await this.#contract.getAuctionState(this.vaultAddress);
-      return state[currentState];
+      try {
+        const currentState = await this.#contract.getAuctionState(this.vaultAddress);
+        return state[currentState];
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
     }
 
     public async getBalanceContributed(address: string) {
@@ -156,8 +94,12 @@ export function LPDA<TBase extends Constructor>(Base: TBase) {
         throw new Error('Invalid address');
       }
 
-      const balance = await this.#contract.balanceContributed(this.vaultAddress, address);
-      return balance.toString();
+      try {
+        const balance = await this.#contract.balanceContributed(this.vaultAddress, address);
+        return balance.toString();
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
     }
 
     public async getBalanceRefunded(address: string) {
@@ -165,37 +107,48 @@ export function LPDA<TBase extends Constructor>(Base: TBase) {
         throw new Error('Invalid address');
       }
 
-      const balance = await this.#contract.balanceRefunded(this.vaultAddress, address);
-      return balance.toString();
+      try {
+        const balance = await this.#contract.balanceRefunded(this.vaultAddress, address);
+        return balance.toString();
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
+
+    public async getBids() {
+      try {
+        const events = await this.#contract.queryFilter(
+          this.#contract.filters.BidEntered(this.vaultAddress)
+        );
+
+        return events.map((event) => ({
+          transactionHash: event.transactionHash,
+          blockNumber: event.blockNumber,
+          vaultAddress: event.args.vault,
+          walletAddress: event.args.user,
+          quantity: event.args.quantity.toString(),
+          price: event.args.price.toString()
+        }));
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
     }
 
     public async getCurrentPrice(): Promise<string> {
-      const price = await this.#contract.currentPrice(this.vaultAddress);
-      return price.toString();
-    }
-
-    public async getFeeReceiver() {
-      return this.#contract.feeReceiver();
-    }
-
-    public async getInfo() {
-      const info = await this.#contract.vaultLPDAInfo(this.vaultAddress);
-      if (info.curator === NullAddress) {
-        throw new Error('Vault does not exist');
+      try {
+        const price = await this.#contract.currentPrice(this.vaultAddress);
+        return price.toString();
+      } catch (e) {
+        throw new Error(formatError(e));
       }
+    }
 
-      return {
-        startTime: info.startTime,
-        endTime: info.endTime,
-        dropPerSecond: info.dropPerSecond.toString(),
-        startPrice: info.startPrice.toString(),
-        endPrice: info.endPrice.toString(),
-        minBid: info.minBid.toString(),
-        supply: info.supply,
-        numSold: info.numSold,
-        curator: info.curator,
-        curatorClaimed: Boolean(info.curatorClaimed.toString())
-      };
+    public async getLPDAFeeReceiver() {
+      try {
+        return await this.#contract.feeReceiver();
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
     }
 
     public async getMinters() {
@@ -207,8 +160,12 @@ export function LPDA<TBase extends Constructor>(Base: TBase) {
         throw new Error('Invalid address');
       }
 
-      const num = await this.#contract.numMinted(this.vaultAddress, address);
-      return num.toString();
+      try {
+        const num = await this.#contract.numMinted(this.vaultAddress, address);
+        return num.toString();
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
     }
 
     public async getRefundOwed(address: string) {
@@ -216,19 +173,197 @@ export function LPDA<TBase extends Constructor>(Base: TBase) {
         throw new Error('Invalid address');
       }
 
-      const refund = await this.#contract.refundOwed(this.vaultAddress, address);
-      return refund.toString();
+      try {
+        const refund = await this.#contract.refundOwed(this.vaultAddress, address);
+        return refund.toString();
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
     }
 
-    public async getTokenInfo() {
-      const vaultRegistryAddress = getContractAddress(Contract.VaultRegistry, this.chainId);
-      const vaultRegistry = VaultRegistryFactory.connect(vaultRegistryAddress, this.connection);
-      const info = await vaultRegistry.vaultToToken(this.vaultAddress);
+    // ======== Write Methods ========
 
-      return {
-        tokenAddress: info.token,
-        tokenId: info.id.toString()
-      };
+    public async enterBid(amount: BigNumberish): Promise<TransactionResponse> {
+      if (!isValidAmount(amount)) {
+        throw new Error('Invalid rae amount');
+      }
+
+      try {
+        const pricePerRae = await this.getCurrentPrice();
+        const totalValue = BigNumber.from(pricePerRae).mul(amount);
+
+        const { balance } = await getCurrentWallet(this.connection);
+        if (balance.lt(totalValue)) {
+          throw new Error('Insufficient balance');
+        }
+
+        return await executeTransaction({
+          connection: this.connection,
+          contract: this.#contract,
+          method: 'enterBid',
+          args: [this.vaultAddress, amount],
+          options: { value: totalValue }
+        });
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
     }
+
+    public async redeemNTFCurator(
+      tokenAddress: string,
+      tokenId: BigNumberish
+    ): Promise<TransactionResponse> {
+      try {
+        const { curator } = await this.getAuction();
+        const wallet = await getCurrentWallet(this.connection);
+        if (wallet.address !== curator) {
+          throw new Error('Only the curator can redeem the NFT');
+        }
+
+        const { redeemProof } = Proofs[this.chainId];
+
+        return await executeTransaction({
+          connection: this.connection,
+          contract: this.#contract,
+          method: 'redeemNFTCurator',
+          args: [this.vaultAddress, tokenAddress, tokenId, redeemProof]
+        });
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
+
+    public async settleAddress(minter?: string): Promise<TransactionResponse> {
+      try {
+        if (!minter) {
+          const wallet = await getCurrentWallet(this.connection);
+          minter = wallet.address;
+        }
+
+        if (minter && !isAddress(minter)) {
+          throw new Error('Invalid minter address');
+        }
+
+        return await executeTransaction({
+          connection: this.connection,
+          contract: this.#contract,
+          method: 'settleAddress',
+          args: [this.vaultAddress, minter]
+        });
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
+
+    public async settleCurator(): Promise<TransactionResponse> {
+      try {
+        const { curator } = await this.getAuction();
+        const wallet = await getCurrentWallet(this.connection);
+        if (wallet.address !== curator) {
+          throw new Error('Only the curator can settle the auction');
+        }
+
+        return await executeTransaction({
+          connection: this.connection,
+          contract: this.#contract,
+          method: 'settleCurator',
+          args: [this.vaultAddress]
+        });
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
+
+    public async updateLPDAFeeReceiver(receiver: string): Promise<TransactionResponse> {
+      if (!isAddress(receiver)) {
+        throw new Error('Invalid receiver address');
+      }
+
+      try {
+        return await executeTransaction({
+          connection: this.connection,
+          contract: this.#contract,
+          method: 'updateFeeReceiver',
+          args: [receiver]
+        });
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
+
+    // ======== Gas Estimation ========
+    public estimateGas = {
+      enterBid: async (amount: BigNumberish) => {
+        try {
+          const pricePerRae = await this.getCurrentPrice();
+          const totalValue = BigNumber.from(pricePerRae).mul(amount);
+
+          return await estimateTransactionGas({
+            connection: this.connection,
+            contract: this.#contract,
+            method: 'enterBid',
+            args: [this.vaultAddress, amount],
+            options: { value: totalValue }
+          });
+        } catch (e) {
+          throw new Error(formatError(e));
+        }
+      },
+      redeemNFTCurator: async (tokenAddress: string, tokenId: BigNumberish) => {
+        try {
+          const { redeemProof } = Proofs[this.chainId];
+
+          return await estimateTransactionGas({
+            connection: this.connection,
+            contract: this.#contract,
+            method: 'redeemNFTCurator',
+            args: [this.vaultAddress, tokenAddress, tokenId, redeemProof]
+          });
+        } catch (e) {
+          throw new Error(formatError(e));
+        }
+      },
+      settleAddress: async (minter?: string) => {
+        try {
+          if (!minter) {
+            const wallet = await getCurrentWallet(this.connection);
+            minter = wallet.address;
+          }
+
+          return await estimateTransactionGas({
+            connection: this.connection,
+            contract: this.#contract,
+            method: 'settleAddress',
+            args: [this.vaultAddress, minter]
+          });
+        } catch (e) {
+          throw new Error(formatError(e));
+        }
+      },
+      settleCurator: async () => {
+        try {
+          return await estimateTransactionGas({
+            connection: this.connection,
+            contract: this.#contract,
+            method: 'settleCurator',
+            args: [this.vaultAddress]
+          });
+        } catch (e) {
+          throw new Error(formatError(e));
+        }
+      },
+      updateLPDAFeeReceiver: async (receiver: string) => {
+        try {
+          return await estimateTransactionGas({
+            connection: this.connection,
+            contract: this.#contract,
+            method: 'updateFeeReceiver',
+            args: [receiver]
+          });
+        } catch (e) {
+          throw new Error(formatError(e));
+        }
+      }
+    };
   };
 }

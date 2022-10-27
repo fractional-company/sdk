@@ -1,5 +1,5 @@
-import { TransactionReceipt, TransactionResponse } from '@ethersproject/providers';
-import { BigNumberish, Contract } from 'ethers';
+import { TransactionResponse } from '@ethersproject/providers';
+import { BigNumberish, Contract, Signer } from 'ethers';
 import { Connection } from '../types/types';
 
 interface ContractOverrides {
@@ -23,7 +23,9 @@ export async function executeTransaction({
   method,
   args = [],
   options = {}
-}: Config): Promise<TransactionReceipt> {
+}: Config): Promise<TransactionResponse> {
+  if (!Signer.isSigner(connection)) throw new Error(`Method ${method} requires a signer`);
+
   const nonce = await connection.getTransactionCount('latest');
   const { maxFeePerGas, maxPriorityFeePerGas } = await connection.getFeeData();
   const gasLimit = await contract.estimateGas[method](...args, {
@@ -38,7 +40,5 @@ export async function executeTransaction({
     ...options
   });
 
-  if (!tx) throw new Error('Transaction failed');
-
-  return tx.wait();
+  return tx;
 }

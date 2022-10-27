@@ -2,12 +2,15 @@ import { BigNumberish, Signer } from 'ethers';
 import { hexStripZeros, isAddress } from 'ethers/lib/utils';
 import { Chain, Contract, Proofs } from '../../constants';
 import { LPDA__factory as LPDAFactory } from '../../contracts';
-import { Connection } from '../../types/types';
+import { Connection, GasData } from '../../types/types';
 import {
+  estimateTransactionGas,
   executeTransaction,
+  formatError,
   getContractAddress,
   isValidAmount,
   isValidChain,
+  isValidConnection,
   isValidTimestamp,
   isValidTokenId
 } from '../../utils';
@@ -20,11 +23,12 @@ interface FactoryReceipt {
 }
 
 export class VaultFactory {
-  private connection: Connection;
-  public isReadOnly: boolean;
   public chainId: Chain;
+  public isReadOnly: boolean;
+  public connection: Connection;
 
   constructor(connection: Connection, chainId: Chain) {
+    if (!isValidConnection(connection)) throw new Error('Invalid signer or provider');
     if (!isValidChain(chainId)) throw new Error('Invalid chain ID');
 
     this.chainId = chainId;
@@ -55,8 +59,6 @@ export class VaultFactory {
     minBid: BigNumberish;
     supply: BigNumberish;
   }): Promise<FactoryReceipt> {
-    this.verifyIsNotReadOnly();
-
     const contract = LPDAFactory.connect(
       getContractAddress(Contract.LPDA, this.chainId),
       this.connection
@@ -96,25 +98,79 @@ export class VaultFactory {
     const selectors: string[] = [];
     const mintProof = Proofs[this.chainId].mintProof;
 
-    const tx = await executeTransaction({
-      connection: this.connection,
-      contract: contract,
-      method: 'deployVault',
-      args: [modules, plugins, selectors, info, tokenAddress, tokenId, mintProof]
-    });
+    try {
+      const tx = await executeTransaction({
+        connection: this.connection,
+        contract: contract,
+        method: 'deployVault',
+        args: [modules, plugins, selectors, info, tokenAddress, tokenId, mintProof]
+      });
 
-    const topics = tx.logs[2].topics; // event: VaultDeployed(address _vault, address _token, uint256 _tokenId)
+      const txRes = await tx.wait();
 
-    return {
-      transactionHash: tx.transactionHash,
-      vaultAddress: hexStripZeros(topics[1]),
-      tokenAddress: hexStripZeros(topics[2]),
-      tokenId: parseInt(topics[3]).toString()
-    };
+      // event: VaultDeployed(address _vault, address _token, uint256 _tokenId)
+      const topics = txRes.logs[2].topics;
+
+      return {
+        transactionHash: txRes.transactionHash,
+        vaultAddress: hexStripZeros(topics[1]),
+        tokenAddress: hexStripZeros(topics[2]),
+        tokenId: parseInt(topics[3]).toString()
+      };
+    } catch (e) {
+      throw new Error(formatError(e));
+    }
   }
 
-  // Validators
-  private verifyIsNotReadOnly(): void {
-    if (this.isReadOnly) throw new Error('Method requires a signer');
-  }
+  // ======== Gas Estimation ========
+  public estimateGas = {
+    deployArtEnjoyer: async (args: {
+      curator: string;
+      tokenAddress: string;
+      tokenId: BigNumberish;
+      startTime: BigNumberish;
+      endTime: BigNumberish;
+      dropPerSecond: BigNumberish;
+      startPrice: BigNumberish;
+      endPrice: BigNumberish;
+      minBid: BigNumberish;
+      supply: BigNumberish;
+    }): Promise<GasData> => {
+      try {
+        return await estimateTransactionGas({
+          connection: this.connection,
+          contract: LPDAFactory.connect(
+            getContractAddress(Contract.LPDA, this.chainId),
+            this.connection
+          ),
+          method: 'deployVault',
+          args: [
+            [
+              getContractAddress(Contract.LPDA, this.chainId),
+              getContractAddress(Contract.OptimisticBid, this.chainId)
+            ],
+            [],
+            [],
+            [
+              args.startTime,
+              args.endTime,
+              args.dropPerSecond,
+              args.startPrice,
+              args.endPrice,
+              args.minBid,
+              args.supply,
+              0,
+              0,
+              args.curator
+            ],
+            args.tokenAddress,
+            args.tokenId,
+            Proofs[this.chainId].mintProof
+          ]
+        });
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
+  };
 }

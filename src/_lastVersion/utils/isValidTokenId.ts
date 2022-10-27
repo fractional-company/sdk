@@ -11,7 +11,7 @@ export function isValidTokenId(id: BigNumberish): boolean {
     return false;
   }
 
-  if (Number.isInteger(numId) && numId > 0) {
+  if (Number.isInteger(numId) && numId >= 0) {
     return true;
   } else {
     return false;

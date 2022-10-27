@@ -1,8 +1,10 @@
+/* eslint-disable no-console */
+
 import { JsonRpcProvider } from '@ethersproject/providers';
 import 'dotenv/config';
 import { Wallet } from 'ethers';
 import { parseEther } from 'ethers/lib/utils';
-import { ArtEnjoyer, Chain, VaultFactory } from '../src/';
+import { ArtEnjoyer, Chain, TokenStandard, VaultFactory } from '../src/';
 
 // Create a wallet instance from a private key
 const { WALLET_PRIVATE_KEY, RPC_API_URL } = process.env;
@@ -20,20 +22,20 @@ const vaultFactory = new VaultFactory(wallet, Chain.Goerli);
 jest.setTimeout(60000);
 
 // Tests
-describe('Art Enjoyer', () => {
-  it('should deploy an Art Enjoyer vault', async () => {
+describe('LPDA', () => {
+  it('should deploy an LPDA vault', async () => {
     return;
     const tx = await vaultFactory.deployArtEnjoyer({
       curator: wallet.address,
       tokenAddress: '0x1652F52A6581031bb220a280e6dC68629dE72602',
-      tokenId: '4467',
+      tokenId: '4470',
       startTime: ((new Date().valueOf() + 60000) / 1000).toFixed(0), // 1 minute from now
       endTime: ((new Date().valueOf() + 600000) / 1000).toFixed(0), // 10 minutes from now
       dropPerSecond: parseEther('0.0001').toString(),
       startPrice: parseEther('0.1').toString(),
       endPrice: parseEther('0.001').toString(),
       minBid: '0',
-      supply: '1'
+      supply: '4'
     });
 
     expect(tx).toBeDefined();
@@ -43,12 +45,12 @@ describe('Art Enjoyer', () => {
   it('should enter a bid', async () => {
     return;
     const vault = new ArtEnjoyer(
-      '0x6967812f478875abd4cf452972f99735bd99a507',
+      '0x38e51a262dbbc9c1d5227dc6fa16407fd6f3169c',
       wallet,
       Chain.Goerli
     );
 
-    const tx = await vault.enterBid('1');
+    const tx = await vault.enterBid('2');
     console.log(tx);
   });
 
@@ -60,7 +62,7 @@ describe('Art Enjoyer', () => {
       Chain.Goerli
     );
 
-    const tx = await vault.redeemNft('0x1652F52A6581031bb220a280e6dC68629dE72602', '4466');
+    const tx = await vault.redeemNTFCurator('0x1652F52A6581031bb220a280e6dC68629dE72602', '4466');
     console.log(tx);
   });
 
@@ -89,13 +91,120 @@ describe('Art Enjoyer', () => {
   });
 
   it('should get balance contributed by an address', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0x1e03462886f7672ebe9d2825f67fb897011e09a3',
+      wallet,
+      Chain.Goerli
+    );
+
+    const balance = await vault.getBalanceContributed(wallet.address);
+    const x = await vault.getNumMinted(wallet.address);
+    console.log(x);
+    console.log(balance);
+  });
+});
+
+describe('OptimisticBid', () => {
+  it('should start a buyout', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0x38e51a262dbbc9c1d5227dc6fa16407fd6f3169c',
+      wallet,
+      Chain.Goerli
+    );
+
+    const tx = await vault.startBuyout('1', '0.2');
+    console.log(tx);
+  });
+
+  it('should get auction info', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0x38e51a262dbbc9c1d5227dc6fa16407fd6f3169c',
+      wallet,
+      Chain.Goerli
+    );
+
+    const tx = await vault.getAllBuyouts();
+    console.log(tx);
+  });
+
+  it('should buy raes from pool', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0x38e51a262dbbc9c1d5227dc6fa16407fd6f3169c',
+      wallet,
+      Chain.Goerli
+    );
+
+    const tx = await vault.buyRaes('1');
+    console.log(tx);
+  });
+
+  it('should cash out proceeds', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0x38e51a262dbbc9c1d5227dc6fa16407fd6f3169c',
+      wallet,
+      Chain.Goerli
+    );
+
+    const tx = await vault.cashProceeds();
+    console.log(tx);
+  });
+
+  it('should redeem the NFT', async () => {
+    return;
     const vault = new ArtEnjoyer(
       '0x6967812f478875abd4cf452972f99735bd99a507',
       wallet,
       Chain.Goerli
     );
 
-    const balance = await vault.getBalanceContributed(wallet.address);
-    console.log(balance);
+    const tx = await vault.redeemNFT();
+    console.log(tx);
+  });
+
+  it('should withdraw balances', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0x38E51A262DbBC9c1D5227dC6FA16407fd6f3169c',
+      wallet,
+      Chain.Goerli
+    );
+
+    const tx = await vault.withdrawBalance();
+    console.log(tx);
+  });
+
+  it('should get past bids', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0x38E51A262DbBC9c1D5227dC6FA16407fd6f3169c',
+      wallet,
+      Chain.Goerli
+    );
+
+    const events = await vault.getBids();
+    console.log(events);
+  });
+
+  it('should withdraw NFTs', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0x6967812f478875abd4cf452972f99735bd99a507',
+      wallet,
+      Chain.Goerli
+    );
+
+    const tx = await vault.withdrawTokens([
+      {
+        address: '0x1652F52A6581031bb220a280e6dC68629dE72602',
+        id: '4467',
+        standard: TokenStandard.ERC721
+      }
+    ]);
+    console.log(tx);
   });
 });
