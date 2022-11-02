@@ -1,5 +1,5 @@
 import { Vault } from '../core/Vault';
-import { LPDA } from '../distributions/LPDA';
-import { OptimisticBid } from '../reconstitutions/OptimisticBid';
+import { LPDAModule } from '../distributions/LPDA';
+import { OptimisticBidModule } from '../reconstitutions/OptimisticBid';
 
-export const ArtEnjoyer = LPDA(OptimisticBid(Vault));
+export const ArtEnjoyer = LPDAModule(OptimisticBidModule(Vault));

@@ -4,7 +4,6 @@ import { isAddress } from 'ethers/lib/utils';
 import { NullAddress, Proofs } from '../../constants';
 import { Contract } from '../../constants/contracts';
 import { LPDA as LPDAInterface, LPDA__factory as LPDAFactory } from '../../contracts';
-import { LPDA } from '../../contracts/LPDA';
 import {
   estimateTransactionGas,
   executeTransaction,
@@ -32,7 +31,7 @@ export enum LPDAEvents {
   CuratorRedeemedNFT = 'CuratorRedeemedNFT'
 }
 
-export function LPDA<TBase extends Constructor>(Base: TBase) {
+export function LPDAModule<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     #address: string;
     #contract: LPDAInterface;
@@ -235,15 +234,6 @@ export function LPDA<TBase extends Constructor>(Base: TBase) {
 
     public async settleAddress(minter?: string): Promise<TransactionResponse> {
       try {
-        if (!minter) {
-          const wallet = await getCurrentWallet(this.connection);
-          minter = wallet.address;
-        }
-
-        if (minter && !isAddress(minter)) {
-          throw new Error('Invalid minter address');
-        }
-
         return await executeTransaction({
           connection: this.connection,
           contract: this.#contract,
@@ -257,12 +247,6 @@ export function LPDA<TBase extends Constructor>(Base: TBase) {
 
     public async settleCurator(): Promise<TransactionResponse> {
       try {
-        const { curator } = await this.getAuction();
-        const wallet = await getCurrentWallet(this.connection);
-        if (wallet.address !== curator) {
-          throw new Error('Only the curator can settle the auction');
-        }
-
         return await executeTransaction({
           connection: this.connection,
           contract: this.#contract,

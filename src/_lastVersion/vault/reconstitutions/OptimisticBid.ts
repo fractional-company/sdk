@@ -37,7 +37,7 @@ export interface OptimisticBidInfo {
   totalSupply: string;
 }
 
-export function OptimisticBid<TBase extends Constructor>(Base: TBase) {
+export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     #address: string;
     #contract: OptimisticBidInterface;

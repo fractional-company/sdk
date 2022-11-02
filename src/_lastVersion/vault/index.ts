@@ -1,4 +1,4 @@
 export * from './core/VaultFactory';
-export * from './distributions/LPDA';
-export * from './protoforms/ArtEnjoyer';
-export * from './reconstitutions/OptimisticBid';
+export * from './distributions';
+export * from './protoforms';
+export * from './reconstitutions';
