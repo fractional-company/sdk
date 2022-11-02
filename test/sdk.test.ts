@@ -2,7 +2,7 @@
 
 import { JsonRpcProvider } from '@ethersproject/providers';
 import 'dotenv/config';
-import { Wallet } from 'ethers';
+import { BigNumber, Wallet } from 'ethers';
 import { parseEther } from 'ethers/lib/utils';
 import { ArtEnjoyer, Chain, TokenStandard, VaultFactory } from '../src/';
 
@@ -25,17 +25,24 @@ jest.setTimeout(60000);
 describe('LPDA', () => {
   it('should deploy an LPDA vault', async () => {
     return;
+    const startTime = ((new Date().valueOf() + 60000) / 1000).toFixed(0); // 1 minute from now
+    const seconds = 36000; // 10 hours from now
+    const endTime = (parseInt(startTime) + seconds).toFixed(0);
+    const dropPerSecond = parseEther('0.000000000000000001').toString();
+    const startPrice = BigNumber.from(dropPerSecond).mul(seconds);
+    const endPrice = '0';
+
     const tx = await vaultFactory.deployArtEnjoyer({
       curator: wallet.address,
       tokenAddress: '0x1652F52A6581031bb220a280e6dC68629dE72602',
-      tokenId: '4473',
-      startTime: ((new Date().valueOf() + 60000) / 1000).toFixed(0), // 1 minute from now
-      endTime: ((new Date().valueOf() + 600000) / 1000).toFixed(0), // 10 minutes from now
-      dropPerSecond: parseEther('0.0001').toString(),
-      startPrice: parseEther('0.1').toString(),
-      endPrice: parseEther('0.001').toString(),
+      tokenId: '4475',
+      startTime,
+      endTime,
+      dropPerSecond,
+      startPrice,
+      endPrice,
       minBid: '0',
-      supply: '4'
+      supply: '1000'
     });
 
     expect(tx).toBeDefined();
@@ -45,12 +52,12 @@ describe('LPDA', () => {
   it('should enter a bid', async () => {
     return;
     const vault = new ArtEnjoyer(
-      '0x38e51a262dbbc9c1d5227dc6fa16407fd6f3169c',
+      '0xe821770f9d8b63f19aeaab14d2070abd4124bc15',
       wallet,
       Chain.Goerli
     );
 
-    const tx = await vault.enterBid('2');
+    const tx = await vault.enterBid('1');
     console.log(tx);
   });
 
@@ -102,6 +109,18 @@ describe('LPDA', () => {
     const x = await vault.getNumMinted(wallet.address);
     console.log(x);
     console.log(balance);
+  });
+
+  it('should get the list of bids', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0x51d271783f76f0848057b99e89dadc54f3a1a9d2',
+      wallet,
+      Chain.Goerli
+    );
+
+    const bids = await vault.getBids();
+    console.log(bids);
   });
 });
 

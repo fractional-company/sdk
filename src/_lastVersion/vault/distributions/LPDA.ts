@@ -121,12 +121,11 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
         );
 
         return events.map((event) => ({
+          bidderAddress: event.args.user,
+          priceWei: event.args.price.toString(),
+          quantity: event.args.quantity.toNumber(),
           transactionHash: event.transactionHash,
-          blockNumber: event.blockNumber,
-          vaultAddress: event.args.vault,
-          walletAddress: event.args.user,
-          quantity: event.args.quantity.toString(),
-          price: event.args.price.toString()
+          blockNumber: event.blockNumber
         }));
       } catch (e) {
         throw new Error(formatError(e));
@@ -273,6 +272,34 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       } catch (e) {
         throw new Error(formatError(e));
       }
+    }
+
+    // ======== Events ========
+    public subscribeToBids(
+      callback: (bid: {
+        bidderAddress: string;
+        priceWei: string;
+        quantity: number;
+        transactionHash: string;
+        blockNumber: number;
+      }) => void
+    ) {
+      this.#contract.on(
+        this.#contract.filters.BidEntered(this.vaultAddress),
+        (vault, user, quantity, price, event) => {
+          callback({
+            bidderAddress: user,
+            priceWei: price.toString(),
+            quantity: quantity.toNumber(),
+            transactionHash: event.transactionHash,
+            blockNumber: event.blockNumber
+          });
+        }
+      );
+    }
+
+    public unsubscribeFromBids() {
+      this.#contract.removeAllListeners(this.#contract.filters.BidEntered(this.vaultAddress));
     }
 
     // ======== Gas Estimation ========
