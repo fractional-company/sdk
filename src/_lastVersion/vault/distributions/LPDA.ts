@@ -13,7 +13,6 @@ import {
   isValidAmount
 } from '../../utils';
 import { Constructor } from '../core/Vault';
-import { BidEnteredEvent } from './../../contracts/LPDA';
 
 export enum LPDAState {
   NotLive = 'NOT_LIVE',
@@ -121,7 +120,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
           this.#contract.filters.BidEntered(this.vaultAddress)
         );
 
-        return events.map((event: BidEnteredEvent) => ({
+        return events.map((event) => ({
           bidderAddress: event.args._user,
           priceWei: event.args._price.toString(),
           quantity: event.args._quantity.toNumber(),
