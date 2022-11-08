@@ -79,6 +79,7 @@ export type PermissionStructOutput = [string, string, string] & {
 
 export interface LPDAInterface extends utils.Interface {
   functions: {
+    "MAX_FEE()": FunctionFragment;
     "WETH_ADDRESS()": FunctionFragment;
     "balanceContributed(address,address)": FunctionFragment;
     "balanceRefunded(address,address)": FunctionFragment;
@@ -90,6 +91,7 @@ export interface LPDAInterface extends utils.Interface {
     "generateUnhashedMerkleTree(address[])": FunctionFragment;
     "getAuctionState(address)": FunctionFragment;
     "getLeaves()": FunctionFragment;
+    "getMinters(address)": FunctionFragment;
     "getPermissions()": FunctionFragment;
     "getProof(bytes32[],uint256)": FunctionFragment;
     "getRoot(bytes32[])": FunctionFragment;
@@ -115,6 +117,7 @@ export interface LPDAInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "MAX_FEE"
       | "WETH_ADDRESS"
       | "balanceContributed"
       | "balanceRefunded"
@@ -126,6 +129,7 @@ export interface LPDAInterface extends utils.Interface {
       | "generateUnhashedMerkleTree"
       | "getAuctionState"
       | "getLeaves"
+      | "getMinters"
       | "getPermissions"
       | "getProof"
       | "getRoot"
@@ -149,6 +153,7 @@ export interface LPDAInterface extends utils.Interface {
       | "verifyProof"
   ): FunctionFragment;
 
+  encodeFunctionData(functionFragment: "MAX_FEE", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "WETH_ADDRESS",
     values?: undefined
@@ -198,6 +203,10 @@ export interface LPDAInterface extends utils.Interface {
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(functionFragment: "getLeaves", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "getMinters",
+    values: [PromiseOrValue<string>]
+  ): string;
   encodeFunctionData(
     functionFragment: "getPermissions",
     values?: undefined
@@ -300,6 +309,7 @@ export interface LPDAInterface extends utils.Interface {
     ]
   ): string;
 
+  decodeFunctionResult(functionFragment: "MAX_FEE", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "WETH_ADDRESS",
     data: BytesLike
@@ -338,6 +348,7 @@ export interface LPDAInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getLeaves", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "getMinters", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getPermissions",
     data: BytesLike
@@ -435,10 +446,10 @@ export type ActiveModulesEvent = TypedEvent<
 export type ActiveModulesEventFilter = TypedEventFilter<ActiveModulesEvent>;
 
 export interface BidEnteredEventObject {
-  vault: string;
-  user: string;
-  quantity: BigNumber;
-  price: BigNumber;
+  _vault: string;
+  _user: string;
+  _quantity: BigNumber;
+  _price: BigNumber;
 }
 export type BidEnteredEvent = TypedEvent<
   [string, string, BigNumber, BigNumber],
@@ -461,9 +472,9 @@ export type CreatedLPDAEvent = TypedEvent<
 export type CreatedLPDAEventFilter = TypedEventFilter<CreatedLPDAEvent>;
 
 export interface CuratorClaimedEventObject {
-  vault: string;
-  curator: string;
-  amount: BigNumber;
+  _vault: string;
+  _curator: string;
+  _amount: BigNumber;
 }
 export type CuratorClaimedEvent = TypedEvent<
   [string, string, BigNumber],
@@ -473,10 +484,10 @@ export type CuratorClaimedEvent = TypedEvent<
 export type CuratorClaimedEventFilter = TypedEventFilter<CuratorClaimedEvent>;
 
 export interface CuratorRedeemedNFTEventObject {
-  vault: string;
-  curator: string;
-  token: string;
-  tokenId: BigNumber;
+  _vault: string;
+  _curator: string;
+  _token: string;
+  _tokenId: BigNumber;
 }
 export type CuratorRedeemedNFTEvent = TypedEvent<
   [string, string, string, BigNumber],
@@ -487,9 +498,9 @@ export type CuratorRedeemedNFTEventFilter =
   TypedEventFilter<CuratorRedeemedNFTEvent>;
 
 export interface FeeDispersedEventObject {
-  vault: string;
-  receiver: string;
-  amount: BigNumber;
+  _vault: string;
+  _receiver: string;
+  _amount: BigNumber;
 }
 export type FeeDispersedEvent = TypedEvent<
   [string, string, BigNumber],
@@ -499,10 +510,10 @@ export type FeeDispersedEvent = TypedEvent<
 export type FeeDispersedEventFilter = TypedEventFilter<FeeDispersedEvent>;
 
 export interface MintedRaesEventObject {
-  vault: string;
-  user: string;
-  quantity: BigNumber;
-  price: BigNumber;
+  _vault: string;
+  _user: string;
+  _quantity: BigNumber;
+  _price: BigNumber;
 }
 export type MintedRaesEvent = TypedEvent<
   [string, string, BigNumber, BigNumber],
@@ -512,9 +523,9 @@ export type MintedRaesEvent = TypedEvent<
 export type MintedRaesEventFilter = TypedEventFilter<MintedRaesEvent>;
 
 export interface RefundedEventObject {
-  vault: string;
-  user: string;
-  balance: BigNumber;
+  _vault: string;
+  _user: string;
+  _balance: BigNumber;
 }
 export type RefundedEvent = TypedEvent<
   [string, string, BigNumber],
@@ -550,6 +561,8 @@ export interface LPDA extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    MAX_FEE(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     WETH_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
 
     balanceContributed(
@@ -565,7 +578,7 @@ export interface LPDA extends BaseContract {
     ): Promise<[BigNumber]>;
 
     currentPrice(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber] & { price: BigNumber }>;
 
@@ -574,15 +587,15 @@ export interface LPDA extends BaseContract {
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
       _lpdaInfo: LPDAInfoStruct,
-      token: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
+      _id: PromiseOrValue<BigNumberish>,
       _mintProof: PromiseOrValue<BytesLike>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     enterBid(
-      vault: PromiseOrValue<string>,
-      amount: PromiseOrValue<BigNumberish>,
+      _vault: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -599,13 +612,18 @@ export interface LPDA extends BaseContract {
     ): Promise<[string[]] & { tree: string[] }>;
 
     getAuctionState(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<[number] & { state: number }>;
+    ): Promise<[number]>;
 
     getLeaves(
       overrides?: CallOverrides
     ): Promise<[string[]] & { leaves: string[] }>;
+
+    getMinters(
+      _vault: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string[]]>;
 
     getPermissions(
       overrides?: CallOverrides
@@ -672,29 +690,29 @@ export interface LPDA extends BaseContract {
     ): Promise<ContractTransaction>;
 
     redeemNFTCurator(
-      vault: PromiseOrValue<string>,
-      token: PromiseOrValue<string>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      erc721TransferProof: PromiseOrValue<BytesLike>[],
+      _vault: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      _erc721TransferProof: PromiseOrValue<BytesLike>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     refundOwed(
-      vault: PromiseOrValue<string>,
-      minter: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
+      _minter: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<[BigNumber] & { owed: BigNumber }>;
+    ): Promise<[BigNumber]>;
 
     registry(overrides?: CallOverrides): Promise<[string]>;
 
     settleAddress(
-      vault: PromiseOrValue<string>,
-      minter: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
+      _minter: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     settleCurator(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -750,6 +768,8 @@ export interface LPDA extends BaseContract {
     ): Promise<[boolean]>;
   };
 
+  MAX_FEE(overrides?: CallOverrides): Promise<BigNumber>;
+
   WETH_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
   balanceContributed(
@@ -765,7 +785,7 @@ export interface LPDA extends BaseContract {
   ): Promise<BigNumber>;
 
   currentPrice(
-    vault: PromiseOrValue<string>,
+    _vault: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
@@ -774,15 +794,15 @@ export interface LPDA extends BaseContract {
     _plugins: PromiseOrValue<string>[],
     _selectors: PromiseOrValue<BytesLike>[],
     _lpdaInfo: LPDAInfoStruct,
-    token: PromiseOrValue<string>,
-    id: PromiseOrValue<BigNumberish>,
+    _token: PromiseOrValue<string>,
+    _id: PromiseOrValue<BigNumberish>,
     _mintProof: PromiseOrValue<BytesLike>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   enterBid(
-    vault: PromiseOrValue<string>,
-    amount: PromiseOrValue<BigNumberish>,
+    _vault: PromiseOrValue<string>,
+    _amount: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -799,11 +819,16 @@ export interface LPDA extends BaseContract {
   ): Promise<string[]>;
 
   getAuctionState(
-    vault: PromiseOrValue<string>,
+    _vault: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<number>;
 
   getLeaves(overrides?: CallOverrides): Promise<string[]>;
+
+  getMinters(
+    _vault: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string[]>;
 
   getPermissions(overrides?: CallOverrides): Promise<PermissionStructOutput[]>;
 
@@ -864,29 +889,29 @@ export interface LPDA extends BaseContract {
   ): Promise<ContractTransaction>;
 
   redeemNFTCurator(
-    vault: PromiseOrValue<string>,
-    token: PromiseOrValue<string>,
-    tokenId: PromiseOrValue<BigNumberish>,
-    erc721TransferProof: PromiseOrValue<BytesLike>[],
+    _vault: PromiseOrValue<string>,
+    _token: PromiseOrValue<string>,
+    _tokenId: PromiseOrValue<BigNumberish>,
+    _erc721TransferProof: PromiseOrValue<BytesLike>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   refundOwed(
-    vault: PromiseOrValue<string>,
-    minter: PromiseOrValue<string>,
+    _vault: PromiseOrValue<string>,
+    _minter: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
   registry(overrides?: CallOverrides): Promise<string>;
 
   settleAddress(
-    vault: PromiseOrValue<string>,
-    minter: PromiseOrValue<string>,
+    _vault: PromiseOrValue<string>,
+    _minter: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   settleCurator(
-    vault: PromiseOrValue<string>,
+    _vault: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -942,6 +967,8 @@ export interface LPDA extends BaseContract {
   ): Promise<boolean>;
 
   callStatic: {
+    MAX_FEE(overrides?: CallOverrides): Promise<BigNumber>;
+
     WETH_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
     balanceContributed(
@@ -957,7 +984,7 @@ export interface LPDA extends BaseContract {
     ): Promise<BigNumber>;
 
     currentPrice(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -966,15 +993,15 @@ export interface LPDA extends BaseContract {
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
       _lpdaInfo: LPDAInfoStruct,
-      token: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
+      _id: PromiseOrValue<BigNumberish>,
       _mintProof: PromiseOrValue<BytesLike>[],
       overrides?: CallOverrides
     ): Promise<string>;
 
     enterBid(
-      vault: PromiseOrValue<string>,
-      amount: PromiseOrValue<BigNumberish>,
+      _vault: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -991,11 +1018,16 @@ export interface LPDA extends BaseContract {
     ): Promise<string[]>;
 
     getAuctionState(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<number>;
 
     getLeaves(overrides?: CallOverrides): Promise<string[]>;
+
+    getMinters(
+      _vault: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string[]>;
 
     getPermissions(
       overrides?: CallOverrides
@@ -1058,29 +1090,29 @@ export interface LPDA extends BaseContract {
     ): Promise<string>;
 
     redeemNFTCurator(
-      vault: PromiseOrValue<string>,
-      token: PromiseOrValue<string>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      erc721TransferProof: PromiseOrValue<BytesLike>[],
+      _vault: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      _erc721TransferProof: PromiseOrValue<BytesLike>[],
       overrides?: CallOverrides
     ): Promise<void>;
 
     refundOwed(
-      vault: PromiseOrValue<string>,
-      minter: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
+      _minter: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     registry(overrides?: CallOverrides): Promise<string>;
 
     settleAddress(
-      vault: PromiseOrValue<string>,
-      minter: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
+      _minter: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     settleCurator(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1147,16 +1179,16 @@ export interface LPDA extends BaseContract {
     ): ActiveModulesEventFilter;
 
     "BidEntered(address,address,uint256,uint256)"(
-      vault?: PromiseOrValue<string> | null,
-      user?: PromiseOrValue<string> | null,
-      quantity?: null,
-      price?: null
+      _vault?: PromiseOrValue<string> | null,
+      _user?: PromiseOrValue<string> | null,
+      _quantity?: null,
+      _price?: null
     ): BidEnteredEventFilter;
     BidEntered(
-      vault?: PromiseOrValue<string> | null,
-      user?: PromiseOrValue<string> | null,
-      quantity?: null,
-      price?: null
+      _vault?: PromiseOrValue<string> | null,
+      _user?: PromiseOrValue<string> | null,
+      _quantity?: null,
+      _price?: null
     ): BidEnteredEventFilter;
 
     "CreatedLPDA(address,address,uint256,tuple)"(
@@ -1173,66 +1205,68 @@ export interface LPDA extends BaseContract {
     ): CreatedLPDAEventFilter;
 
     "CuratorClaimed(address,address,uint256)"(
-      vault?: PromiseOrValue<string> | null,
-      curator?: PromiseOrValue<string> | null,
-      amount?: null
+      _vault?: PromiseOrValue<string> | null,
+      _curator?: PromiseOrValue<string> | null,
+      _amount?: null
     ): CuratorClaimedEventFilter;
     CuratorClaimed(
-      vault?: PromiseOrValue<string> | null,
-      curator?: PromiseOrValue<string> | null,
-      amount?: null
+      _vault?: PromiseOrValue<string> | null,
+      _curator?: PromiseOrValue<string> | null,
+      _amount?: null
     ): CuratorClaimedEventFilter;
 
     "CuratorRedeemedNFT(address,address,address,uint256)"(
-      vault?: PromiseOrValue<string> | null,
-      curator?: PromiseOrValue<string> | null,
-      token?: PromiseOrValue<string> | null,
-      tokenId?: null
+      _vault?: PromiseOrValue<string> | null,
+      _curator?: PromiseOrValue<string> | null,
+      _token?: PromiseOrValue<string> | null,
+      _tokenId?: null
     ): CuratorRedeemedNFTEventFilter;
     CuratorRedeemedNFT(
-      vault?: PromiseOrValue<string> | null,
-      curator?: PromiseOrValue<string> | null,
-      token?: PromiseOrValue<string> | null,
-      tokenId?: null
+      _vault?: PromiseOrValue<string> | null,
+      _curator?: PromiseOrValue<string> | null,
+      _token?: PromiseOrValue<string> | null,
+      _tokenId?: null
     ): CuratorRedeemedNFTEventFilter;
 
     "FeeDispersed(address,address,uint256)"(
-      vault?: PromiseOrValue<string> | null,
-      receiver?: PromiseOrValue<string> | null,
-      amount?: null
+      _vault?: PromiseOrValue<string> | null,
+      _receiver?: PromiseOrValue<string> | null,
+      _amount?: null
     ): FeeDispersedEventFilter;
     FeeDispersed(
-      vault?: PromiseOrValue<string> | null,
-      receiver?: PromiseOrValue<string> | null,
-      amount?: null
+      _vault?: PromiseOrValue<string> | null,
+      _receiver?: PromiseOrValue<string> | null,
+      _amount?: null
     ): FeeDispersedEventFilter;
 
     "MintedRaes(address,address,uint256,uint256)"(
-      vault?: PromiseOrValue<string> | null,
-      user?: PromiseOrValue<string> | null,
-      quantity?: null,
-      price?: null
+      _vault?: PromiseOrValue<string> | null,
+      _user?: PromiseOrValue<string> | null,
+      _quantity?: null,
+      _price?: null
     ): MintedRaesEventFilter;
     MintedRaes(
-      vault?: PromiseOrValue<string> | null,
-      user?: PromiseOrValue<string> | null,
-      quantity?: null,
-      price?: null
+      _vault?: PromiseOrValue<string> | null,
+      _user?: PromiseOrValue<string> | null,
+      _quantity?: null,
+      _price?: null
     ): MintedRaesEventFilter;
 
     "Refunded(address,address,uint256)"(
-      vault?: PromiseOrValue<string> | null,
-      user?: PromiseOrValue<string> | null,
-      balance?: null
+      _vault?: PromiseOrValue<string> | null,
+      _user?: PromiseOrValue<string> | null,
+      _balance?: null
     ): RefundedEventFilter;
     Refunded(
-      vault?: PromiseOrValue<string> | null,
-      user?: PromiseOrValue<string> | null,
-      balance?: null
+      _vault?: PromiseOrValue<string> | null,
+      _user?: PromiseOrValue<string> | null,
+      _balance?: null
     ): RefundedEventFilter;
   };
 
   estimateGas: {
+    MAX_FEE(overrides?: CallOverrides): Promise<BigNumber>;
+
     WETH_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
 
     balanceContributed(
@@ -1248,7 +1282,7 @@ export interface LPDA extends BaseContract {
     ): Promise<BigNumber>;
 
     currentPrice(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1257,15 +1291,15 @@ export interface LPDA extends BaseContract {
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
       _lpdaInfo: LPDAInfoStruct,
-      token: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
+      _id: PromiseOrValue<BigNumberish>,
       _mintProof: PromiseOrValue<BytesLike>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     enterBid(
-      vault: PromiseOrValue<string>,
-      amount: PromiseOrValue<BigNumberish>,
+      _vault: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1282,11 +1316,16 @@ export interface LPDA extends BaseContract {
     ): Promise<BigNumber>;
 
     getAuctionState(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getLeaves(overrides?: CallOverrides): Promise<BigNumber>;
+
+    getMinters(
+      _vault: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     getPermissions(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1347,29 +1386,29 @@ export interface LPDA extends BaseContract {
     ): Promise<BigNumber>;
 
     redeemNFTCurator(
-      vault: PromiseOrValue<string>,
-      token: PromiseOrValue<string>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      erc721TransferProof: PromiseOrValue<BytesLike>[],
+      _vault: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      _erc721TransferProof: PromiseOrValue<BytesLike>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     refundOwed(
-      vault: PromiseOrValue<string>,
-      minter: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
+      _minter: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     registry(overrides?: CallOverrides): Promise<BigNumber>;
 
     settleAddress(
-      vault: PromiseOrValue<string>,
-      minter: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
+      _minter: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     settleCurator(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1402,6 +1441,8 @@ export interface LPDA extends BaseContract {
   };
 
   populateTransaction: {
+    MAX_FEE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     WETH_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     balanceContributed(
@@ -1417,7 +1458,7 @@ export interface LPDA extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     currentPrice(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1426,15 +1467,15 @@ export interface LPDA extends BaseContract {
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
       _lpdaInfo: LPDAInfoStruct,
-      token: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
+      _token: PromiseOrValue<string>,
+      _id: PromiseOrValue<BigNumberish>,
       _mintProof: PromiseOrValue<BytesLike>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     enterBid(
-      vault: PromiseOrValue<string>,
-      amount: PromiseOrValue<BigNumberish>,
+      _vault: PromiseOrValue<string>,
+      _amount: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1451,11 +1492,16 @@ export interface LPDA extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getAuctionState(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getLeaves(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getMinters(
+      _vault: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     getPermissions(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -1516,29 +1562,29 @@ export interface LPDA extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     redeemNFTCurator(
-      vault: PromiseOrValue<string>,
-      token: PromiseOrValue<string>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      erc721TransferProof: PromiseOrValue<BytesLike>[],
+      _vault: PromiseOrValue<string>,
+      _token: PromiseOrValue<string>,
+      _tokenId: PromiseOrValue<BigNumberish>,
+      _erc721TransferProof: PromiseOrValue<BytesLike>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     refundOwed(
-      vault: PromiseOrValue<string>,
-      minter: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
+      _minter: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     registry(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     settleAddress(
-      vault: PromiseOrValue<string>,
-      minter: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
+      _minter: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     settleCurator(
-      vault: PromiseOrValue<string>,
+      _vault: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

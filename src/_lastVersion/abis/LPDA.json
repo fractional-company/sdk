@@ -22,10 +22,10 @@
   {
     "anonymous": false,
     "inputs": [
-      { "indexed": true, "internalType": "address", "name": "vault", "type": "address" },
-      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "quantity", "type": "uint256" },
-      { "indexed": false, "internalType": "uint256", "name": "price", "type": "uint256" }
+      { "indexed": true, "internalType": "address", "name": "_vault", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "_user", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "_quantity", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "_price", "type": "uint256" }
     ],
     "name": "BidEntered",
     "type": "event"
@@ -61,9 +61,9 @@
   {
     "anonymous": false,
     "inputs": [
-      { "indexed": true, "internalType": "address", "name": "vault", "type": "address" },
-      { "indexed": true, "internalType": "address", "name": "curator", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+      { "indexed": true, "internalType": "address", "name": "_vault", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "_curator", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "_amount", "type": "uint256" }
     ],
     "name": "CuratorClaimed",
     "type": "event"
@@ -71,10 +71,10 @@
   {
     "anonymous": false,
     "inputs": [
-      { "indexed": true, "internalType": "address", "name": "vault", "type": "address" },
-      { "indexed": true, "internalType": "address", "name": "curator", "type": "address" },
-      { "indexed": true, "internalType": "address", "name": "token", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+      { "indexed": true, "internalType": "address", "name": "_vault", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "_curator", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "_token", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "_tokenId", "type": "uint256" }
     ],
     "name": "CuratorRedeemedNFT",
     "type": "event"
@@ -82,9 +82,9 @@
   {
     "anonymous": false,
     "inputs": [
-      { "indexed": true, "internalType": "address", "name": "vault", "type": "address" },
-      { "indexed": true, "internalType": "address", "name": "receiver", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+      { "indexed": true, "internalType": "address", "name": "_vault", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "_receiver", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "_amount", "type": "uint256" }
     ],
     "name": "FeeDispersed",
     "type": "event"
@@ -92,10 +92,10 @@
   {
     "anonymous": false,
     "inputs": [
-      { "indexed": true, "internalType": "address", "name": "vault", "type": "address" },
-      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "quantity", "type": "uint256" },
-      { "indexed": false, "internalType": "uint256", "name": "price", "type": "uint256" }
+      { "indexed": true, "internalType": "address", "name": "_vault", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "_user", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "_quantity", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "_price", "type": "uint256" }
     ],
     "name": "MintedRaes",
     "type": "event"
@@ -103,12 +103,19 @@
   {
     "anonymous": false,
     "inputs": [
-      { "indexed": true, "internalType": "address", "name": "vault", "type": "address" },
-      { "indexed": true, "internalType": "address", "name": "user", "type": "address" },
-      { "indexed": false, "internalType": "uint256", "name": "balance", "type": "uint256" }
+      { "indexed": true, "internalType": "address", "name": "_vault", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "_user", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "_balance", "type": "uint256" }
     ],
     "name": "Refunded",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_FEE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [],
@@ -138,7 +145,7 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "address", "name": "vault", "type": "address" }],
+    "inputs": [{ "internalType": "address", "name": "_vault", "type": "address" }],
     "name": "currentPrice",
     "outputs": [{ "internalType": "uint256", "name": "price", "type": "uint256" }],
     "stateMutability": "view",
@@ -166,8 +173,8 @@
         "name": "_lpdaInfo",
         "type": "tuple"
       },
-      { "internalType": "address", "name": "token", "type": "address" },
-      { "internalType": "uint256", "name": "id", "type": "uint256" },
+      { "internalType": "address", "name": "_token", "type": "address" },
+      { "internalType": "uint256", "name": "_id", "type": "uint256" },
       { "internalType": "bytes32[]", "name": "_mintProof", "type": "bytes32[]" }
     ],
     "name": "deployVault",
@@ -177,8 +184,8 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "vault", "type": "address" },
-      { "internalType": "uint16", "name": "amount", "type": "uint16" }
+      { "internalType": "address", "name": "_vault", "type": "address" },
+      { "internalType": "uint16", "name": "_amount", "type": "uint16" }
     ],
     "name": "enterBid",
     "outputs": [],
@@ -207,9 +214,9 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "address", "name": "vault", "type": "address" }],
+    "inputs": [{ "internalType": "address", "name": "_vault", "type": "address" }],
     "name": "getAuctionState",
-    "outputs": [{ "internalType": "enum LPDAState", "name": "state", "type": "uint8" }],
+    "outputs": [{ "internalType": "enum LPDAState", "name": "", "type": "uint8" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -217,6 +224,13 @@
     "inputs": [],
     "name": "getLeaves",
     "outputs": [{ "internalType": "bytes32[]", "name": "leaves", "type": "bytes32[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "_vault", "type": "address" }],
+    "name": "getMinters",
+    "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -329,10 +343,10 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "vault", "type": "address" },
-      { "internalType": "address", "name": "token", "type": "address" },
-      { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
-      { "internalType": "bytes32[]", "name": "erc721TransferProof", "type": "bytes32[]" }
+      { "internalType": "address", "name": "_vault", "type": "address" },
+      { "internalType": "address", "name": "_token", "type": "address" },
+      { "internalType": "uint256", "name": "_tokenId", "type": "uint256" },
+      { "internalType": "bytes32[]", "name": "_erc721TransferProof", "type": "bytes32[]" }
     ],
     "name": "redeemNFTCurator",
     "outputs": [],
@@ -341,11 +355,11 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "vault", "type": "address" },
-      { "internalType": "address", "name": "minter", "type": "address" }
+      { "internalType": "address", "name": "_vault", "type": "address" },
+      { "internalType": "address", "name": "_minter", "type": "address" }
     ],
     "name": "refundOwed",
-    "outputs": [{ "internalType": "uint256", "name": "owed", "type": "uint256" }],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -358,8 +372,8 @@
   },
   {
     "inputs": [
-      { "internalType": "address", "name": "vault", "type": "address" },
-      { "internalType": "address", "name": "minter", "type": "address" }
+      { "internalType": "address", "name": "_vault", "type": "address" },
+      { "internalType": "address", "name": "_minter", "type": "address" }
     ],
     "name": "settleAddress",
     "outputs": [],
@@ -367,7 +381,7 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "address", "name": "vault", "type": "address" }],
+    "inputs": [{ "internalType": "address", "name": "_vault", "type": "address" }],
     "name": "settleCurator",
     "outputs": [],
     "stateMutability": "nonpayable",

@@ -13,6 +13,7 @@ import {
   isValidAmount
 } from '../../utils';
 import { Constructor } from '../core/Vault';
+import { BidEnteredEvent } from './../../contracts/LPDA';
 
 export enum LPDAState {
   NotLive = 'NOT_LIVE',
@@ -120,10 +121,10 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
           this.#contract.filters.BidEntered(this.vaultAddress)
         );
 
-        return events.map((event) => ({
-          bidderAddress: event.args.user,
-          priceWei: event.args.price.toString(),
-          quantity: event.args.quantity.toNumber(),
+        return events.map((event: BidEnteredEvent) => ({
+          bidderAddress: event.args._user,
+          priceWei: event.args._price.toString(),
+          quantity: event.args._quantity.toNumber(),
           transactionHash: event.transactionHash,
           blockNumber: event.blockNumber
         }));
@@ -150,17 +151,24 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
     }
 
     public async getMinters() {
-      // todo: implement
+      try {
+        const minters = await this.#contract.getMinters(this.#address);
+        return minters;
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
     }
 
-    public async getNumMinted(address: string) {
-      if (!isAddress(address)) {
+    public async getNumMinted(address?: string) {
+      if (address && !isAddress(address)) {
         throw new Error('Invalid address');
       }
 
       try {
-        const num = await this.#contract.numMinted(this.vaultAddress, address);
-        return num.toString();
+        const wallet = await getCurrentWallet(this.connection);
+        const addressToLookup = address || wallet.address;
+        const num = await this.#contract.numMinted(this.vaultAddress, addressToLookup);
+        return num.toNumber();
       } catch (e) {
         throw new Error(formatError(e));
       }
@@ -232,17 +240,27 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
     }
 
     public async settleAddress(minter?: string): Promise<TransactionResponse> {
+      if (minter && !isAddress(minter)) {
+        throw new Error('Invalid address');
+      }
+
       try {
+        const wallet = await getCurrentWallet(this.connection);
+        const addressToSettle = minter || wallet.address;
+
         return await executeTransaction({
           connection: this.connection,
           contract: this.#contract,
           method: 'settleAddress',
-          args: [this.vaultAddress, minter]
+          args: [this.vaultAddress, addressToSettle]
         });
       } catch (e) {
         throw new Error(formatError(e));
       }
     }
+
+    // todo: implement function
+    // public async settleAllAddresses(): Promise<TransactionResponse> {}
 
     public async settleCurator(): Promise<TransactionResponse> {
       try {

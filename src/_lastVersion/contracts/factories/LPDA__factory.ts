@@ -63,25 +63,25 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
       {
         indexed: true,
         internalType: "address",
-        name: "user",
+        name: "_user",
         type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "quantity",
+        name: "_quantity",
         type: "uint256",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "price",
+        name: "_price",
         type: "uint256",
       },
     ],
@@ -177,19 +177,19 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
       {
         indexed: true,
         internalType: "address",
-        name: "curator",
+        name: "_curator",
         type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "amount",
+        name: "_amount",
         type: "uint256",
       },
     ],
@@ -202,25 +202,25 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
       {
         indexed: true,
         internalType: "address",
-        name: "curator",
+        name: "_curator",
         type: "address",
       },
       {
         indexed: true,
         internalType: "address",
-        name: "token",
+        name: "_token",
         type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "tokenId",
+        name: "_tokenId",
         type: "uint256",
       },
     ],
@@ -233,19 +233,19 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
       {
         indexed: true,
         internalType: "address",
-        name: "receiver",
+        name: "_receiver",
         type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "amount",
+        name: "_amount",
         type: "uint256",
       },
     ],
@@ -258,25 +258,25 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
       {
         indexed: true,
         internalType: "address",
-        name: "user",
+        name: "_user",
         type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "quantity",
+        name: "_quantity",
         type: "uint256",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "price",
+        name: "_price",
         type: "uint256",
       },
     ],
@@ -289,24 +289,37 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
       {
         indexed: true,
         internalType: "address",
-        name: "user",
+        name: "_user",
         type: "address",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "balance",
+        name: "_balance",
         type: "uint256",
       },
     ],
     name: "Refunded",
     type: "event",
+  },
+  {
+    inputs: [],
+    name: "MAX_FEE",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
   },
   {
     inputs: [],
@@ -373,7 +386,7 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
     ],
@@ -464,12 +477,12 @@ const _abi = [
       },
       {
         internalType: "address",
-        name: "token",
+        name: "_token",
         type: "address",
       },
       {
         internalType: "uint256",
-        name: "id",
+        name: "_id",
         type: "uint256",
       },
       {
@@ -493,12 +506,12 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
       {
         internalType: "uint16",
-        name: "amount",
+        name: "_amount",
         type: "uint16",
       },
     ],
@@ -562,7 +575,7 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
     ],
@@ -570,7 +583,7 @@ const _abi = [
     outputs: [
       {
         internalType: "enum LPDAState",
-        name: "state",
+        name: "",
         type: "uint8",
       },
     ],
@@ -585,6 +598,25 @@ const _abi = [
         internalType: "bytes32[]",
         name: "leaves",
         type: "bytes32[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_vault",
+        type: "address",
+      },
+    ],
+    name: "getMinters",
+    outputs: [
+      {
+        internalType: "address[]",
+        name: "",
+        type: "address[]",
       },
     ],
     stateMutability: "view",
@@ -859,22 +891,22 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
       {
         internalType: "address",
-        name: "token",
+        name: "_token",
         type: "address",
       },
       {
         internalType: "uint256",
-        name: "tokenId",
+        name: "_tokenId",
         type: "uint256",
       },
       {
         internalType: "bytes32[]",
-        name: "erc721TransferProof",
+        name: "_erc721TransferProof",
         type: "bytes32[]",
       },
     ],
@@ -887,12 +919,12 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
       {
         internalType: "address",
-        name: "minter",
+        name: "_minter",
         type: "address",
       },
     ],
@@ -900,7 +932,7 @@ const _abi = [
     outputs: [
       {
         internalType: "uint256",
-        name: "owed",
+        name: "",
         type: "uint256",
       },
     ],
@@ -924,12 +956,12 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
       {
         internalType: "address",
-        name: "minter",
+        name: "_minter",
         type: "address",
       },
     ],
@@ -942,7 +974,7 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "vault",
+        name: "_vault",
         type: "address",
       },
     ],

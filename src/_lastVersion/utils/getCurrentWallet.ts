@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-import { Signer, BigNumber } from 'ethers';
+
 import { Provider } from '@ethersproject/abstract-provider';
+import { BigNumber, Signer } from 'ethers';
 import { Connection } from '../types/types';
 
 export async function getCurrentWallet(connection: Connection): Promise<{
