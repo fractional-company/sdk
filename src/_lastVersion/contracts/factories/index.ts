@@ -3,5 +3,6 @@
 /* eslint-disable */
 export { FERC1155__factory } from "./FERC1155__factory";
 export { LPDA__factory } from "./LPDA__factory";
+export { Multicall__factory } from "./Multicall__factory";
 export { OptimisticBid__factory } from "./OptimisticBid__factory";
 export { VaultRegistry__factory } from "./VaultRegistry__factory";

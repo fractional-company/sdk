@@ -26,7 +26,7 @@ describe('LPDA', () => {
   it('should deploy an LPDA vault', async () => {
     return;
     const startTime = ((new Date().valueOf() + 60000) / 1000).toFixed(0); // 1 minute from now
-    const seconds = 36000; // 10 hours from now
+    const seconds = 1200; // 10 minutes from now
     const endTime = (parseInt(startTime) + seconds).toFixed(0);
     const dropPerSecond = parseEther('0.000000000000000001').toString();
     const startPrice = BigNumber.from(dropPerSecond).mul(seconds);
@@ -35,7 +35,7 @@ describe('LPDA', () => {
     const tx = await vaultFactory.deployArtEnjoyer({
       curator: wallet.address,
       tokenAddress: '0x1652F52A6581031bb220a280e6dC68629dE72602',
-      tokenId: '4475',
+      tokenId: '4476',
       startTime,
       endTime,
       dropPerSecond,
@@ -52,7 +52,7 @@ describe('LPDA', () => {
   it('should enter a bid', async () => {
     return;
     const vault = new ArtEnjoyer(
-      '0xe821770f9d8b63f19aeaab14d2070abd4124bc15',
+      '0xee3a81e8e73d14954a3d90c45429fceac25dffce',
       wallet,
       Chain.Goerli
     );
@@ -76,12 +76,24 @@ describe('LPDA', () => {
   it('should settle the auction (address)', async () => {
     return;
     const vault = new ArtEnjoyer(
-      '0x6967812f478875abd4cf452972f99735bd99a507',
+      '0xee3a81e8e73d14954a3d90c45429fceac25dffce',
       wallet,
       Chain.Goerli
     );
 
     const tx = await vault.settleAddress();
+    console.log(tx);
+  });
+
+  it('should settle the auction (batch)', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0xee3a81e8e73d14954a3d90c45429fceac25dffce',
+      wallet,
+      Chain.Goerli
+    );
+
+    const tx = await vault.settleAllAddresses();
     console.log(tx);
   });
 
@@ -114,7 +126,7 @@ describe('LPDA', () => {
   it('should get the list of bids', async () => {
     return;
     const vault = new ArtEnjoyer(
-      '0x51d271783f76f0848057b99e89dadc54f3a1a9d2',
+      '0xee3a81e8e73d14954a3d90c45429fceac25dffce',
       wallet,
       Chain.Goerli
     );
@@ -122,19 +134,59 @@ describe('LPDA', () => {
     const bids = await vault.getBids();
     console.log(bids);
   });
+
+  it('should get the list of minters', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0xee3a81e8e73d14954a3d90c45429fceac25dffce',
+      wallet,
+      Chain.Goerli
+    );
+
+    const minters = await vault.getMinters();
+    console.log(minters);
+  });
+
+  it('should get the auction info', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0xee3a81e8e73d14954a3d90c45429fceac25dffce',
+      wallet,
+      Chain.Goerli
+    );
+
+    const auction = await vault.getAuction();
+    console.log(auction);
+  });
+
+  it('should allow curator to redeem the NFT on failure', async () => {
+    return;
+    const vault = new ArtEnjoyer(
+      '0xee3a81e8e73d14954a3d90c45429fceac25dffce',
+      wallet,
+      Chain.Goerli
+    );
+
+    const auction = await vault.redeemNTFCurator(
+      '0x1652F52A6581031bb220a280e6dC68629dE72602',
+      '4476'
+    );
+    console.log(auction);
+  });
 });
 
 describe('OptimisticBid', () => {
   it('should start a buyout', async () => {
     return;
     const vault = new ArtEnjoyer(
-      '0x38e51a262dbbc9c1d5227dc6fa16407fd6f3169c',
+      '0x1652F52A6581031bb220a280e6dC68629dE72602',
       wallet,
       Chain.Goerli
     );
 
     const tx = await vault.startBuyout('1', '0.2');
-    console.log(tx);
+    const awaited = await tx.wait();
+    console.log(awaited);
   });
 
   it('should get auction info', async () => {

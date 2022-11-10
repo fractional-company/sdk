@@ -3,10 +3,12 @@
 /* eslint-disable */
 export type { FERC1155 } from "./FERC1155";
 export type { LPDA } from "./LPDA";
+export type { Multicall } from "./Multicall";
 export type { OptimisticBid } from "./OptimisticBid";
 export type { VaultRegistry } from "./VaultRegistry";
 export * as factories from "./factories";
 export { FERC1155__factory } from "./factories/FERC1155__factory";
 export { LPDA__factory } from "./factories/LPDA__factory";
+export { Multicall__factory } from "./factories/Multicall__factory";
 export { OptimisticBid__factory } from "./factories/OptimisticBid__factory";
 export { VaultRegistry__factory } from "./factories/VaultRegistry__factory";

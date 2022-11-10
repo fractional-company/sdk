@@ -3,7 +3,11 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
 import { NullAddress, Proofs } from '../../constants';
 import { Contract } from '../../constants/contracts';
-import { LPDA as LPDAInterface, LPDA__factory as LPDAFactory } from '../../contracts';
+import {
+  LPDA as LPDAInterface,
+  LPDA__factory as LPDAFactory,
+  Multicall__factory as MulticallFactory
+} from '../../contracts';
 import {
   estimateTransactionGas,
   executeTransaction,
@@ -149,10 +153,10 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       }
     }
 
-    public async getMinters() {
+    public async getMinters(): Promise<string[]> {
       try {
-        const minters = await this.#contract.getMinters(this.#address);
-        return minters;
+        const minters = await this.#contract.getMinters(this.vaultAddress);
+        return [...new Set(minters)];
       } catch (e) {
         throw new Error(formatError(e));
       }
@@ -258,8 +262,42 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       }
     }
 
-    // todo: implement function
-    // public async settleAllAddresses(): Promise<TransactionResponse> {}
+    public async settleAllAddresses(): Promise<TransactionResponse> {
+      const multicallContract = MulticallFactory.connect(
+        getContractAddress(Contract.Multicall, this.chainId),
+        this.connection
+      );
+
+      try {
+        const addresses = await this.getMinters();
+        if (addresses.length === 0) throw new Error('No addresses to settle');
+
+        const data: {
+          target: string;
+          allowFailure: boolean;
+          callData: string;
+        }[] = [];
+
+        for (const address of addresses) {
+          const callData = this.#contract.interface.encodeFunctionData('settleAddress', [
+            this.vaultAddress,
+            address
+          ]);
+          const target = this.#contract.address;
+          const allowFailure = true;
+          data.push({ target, allowFailure, callData });
+        }
+
+        return await executeTransaction({
+          connection: this.connection,
+          contract: multicallContract,
+          method: 'aggregate3',
+          args: [data]
+        });
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
 
     public async settleCurator(): Promise<TransactionResponse> {
       try {
