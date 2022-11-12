@@ -104,7 +104,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
     }
 
     async #getAuctionId(): Promise<number> {
-      const auctionId = await this.#contract.auctionIds(this.vaultAddress);
+      const auctionId = await this.#contract.currentAuctionId(this.vaultAddress);
       return parseInt(auctionId.toString());
     }
 

@@ -40,6 +40,11 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "DepositNotLessThanSupply",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "InvalidPayment",
     type: "error",
   },
@@ -178,6 +183,12 @@ const _abi = [
         internalType: "address",
         name: "_casher",
         type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "_raes",
+        type: "uint256",
       },
       {
         indexed: false,
@@ -343,25 +354,6 @@ const _abi = [
     inputs: [
       {
         internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    name: "auctionIds",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
         name: "_vault",
         type: "address",
       },
@@ -484,6 +476,25 @@ const _abi = [
     name: "cash",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    name: "currentAuctionId",
+    outputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {

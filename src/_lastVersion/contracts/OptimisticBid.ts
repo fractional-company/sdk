@@ -72,11 +72,11 @@ export interface OptimisticBidInterface extends utils.Interface {
   functions: {
     "REJECTION_PERIOD()": FunctionFragment;
     "WETH_ADDRESS()": FunctionFragment;
-    "auctionIds(address)": FunctionFragment;
     "batchWithdrawERC1155(address,address,address,uint256[],uint256[],bytes32[])": FunctionFragment;
     "buy(address,uint256)": FunctionFragment;
     "buyoutInfo(address,uint256)": FunctionFragment;
     "cash(address,bytes32[])": FunctionFragment;
+    "currentAuctionId(address)": FunctionFragment;
     "end(address,bytes32[])": FunctionFragment;
     "feeReceiver()": FunctionFragment;
     "getLeaves()": FunctionFragment;
@@ -102,11 +102,11 @@ export interface OptimisticBidInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "REJECTION_PERIOD"
       | "WETH_ADDRESS"
-      | "auctionIds"
       | "batchWithdrawERC1155"
       | "buy"
       | "buyoutInfo"
       | "cash"
+      | "currentAuctionId"
       | "end"
       | "feeReceiver"
       | "getLeaves"
@@ -137,10 +137,6 @@ export interface OptimisticBidInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "auctionIds",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "batchWithdrawERC1155",
     values: [
       PromiseOrValue<string>,
@@ -162,6 +158,10 @@ export interface OptimisticBidInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "cash",
     values: [PromiseOrValue<string>, PromiseOrValue<BytesLike>[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "currentAuctionId",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "end",
@@ -272,7 +272,6 @@ export interface OptimisticBidInterface extends utils.Interface {
     functionFragment: "WETH_ADDRESS",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "auctionIds", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "batchWithdrawERC1155",
     data: BytesLike
@@ -280,6 +279,10 @@ export interface OptimisticBidInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "buy", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "buyoutInfo", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "cash", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "currentAuctionId",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "end", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "feeReceiver",
@@ -332,7 +335,7 @@ export interface OptimisticBidInterface extends utils.Interface {
 
   events: {
     "BuyRaes(address,address,uint256,uint256)": EventFragment;
-    "Cash(address,address,uint256)": EventFragment;
+    "Cash(address,address,uint256,uint256)": EventFragment;
     "End(address,uint8,address,uint256)": EventFragment;
     "Redeem(address,address)": EventFragment;
     "Start(address,address,uint256,uint256,tuple)": EventFragment;
@@ -361,10 +364,11 @@ export type BuyRaesEventFilter = TypedEventFilter<BuyRaesEvent>;
 export interface CashEventObject {
   _vault: string;
   _casher: string;
+  _raes: BigNumber;
   _amount: BigNumber;
 }
 export type CashEvent = TypedEvent<
-  [string, string, BigNumber],
+  [string, string, BigNumber, BigNumber],
   CashEventObject
 >;
 
@@ -436,11 +440,6 @@ export interface OptimisticBid extends BaseContract {
 
     WETH_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
 
-    auctionIds(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
     batchWithdrawERC1155(
       _vault: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
@@ -486,6 +485,11 @@ export interface OptimisticBid extends BaseContract {
       _burnProof: PromiseOrValue<BytesLike>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    currentAuctionId(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
 
     end(
       _vault: PromiseOrValue<string>,
@@ -602,11 +606,6 @@ export interface OptimisticBid extends BaseContract {
 
   WETH_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
-  auctionIds(
-    arg0: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
   batchWithdrawERC1155(
     _vault: PromiseOrValue<string>,
     _token: PromiseOrValue<string>,
@@ -644,6 +643,11 @@ export interface OptimisticBid extends BaseContract {
     _burnProof: PromiseOrValue<BytesLike>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  currentAuctionId(
+    arg0: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   end(
     _vault: PromiseOrValue<string>,
@@ -752,11 +756,6 @@ export interface OptimisticBid extends BaseContract {
 
     WETH_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
-    auctionIds(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     batchWithdrawERC1155(
       _vault: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
@@ -802,6 +801,11 @@ export interface OptimisticBid extends BaseContract {
       _burnProof: PromiseOrValue<BytesLike>[],
       overrides?: CallOverrides
     ): Promise<void>;
+
+    currentAuctionId(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     end(
       _vault: PromiseOrValue<string>,
@@ -922,14 +926,16 @@ export interface OptimisticBid extends BaseContract {
       _amount?: null
     ): BuyRaesEventFilter;
 
-    "Cash(address,address,uint256)"(
+    "Cash(address,address,uint256,uint256)"(
       _vault?: PromiseOrValue<string> | null,
       _casher?: PromiseOrValue<string> | null,
+      _raes?: null,
       _amount?: null
     ): CashEventFilter;
     Cash(
       _vault?: PromiseOrValue<string> | null,
       _casher?: PromiseOrValue<string> | null,
+      _raes?: null,
       _amount?: null
     ): CashEventFilter;
 
@@ -976,11 +982,6 @@ export interface OptimisticBid extends BaseContract {
 
     WETH_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
 
-    auctionIds(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     batchWithdrawERC1155(
       _vault: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
@@ -1007,6 +1008,11 @@ export interface OptimisticBid extends BaseContract {
       _vault: PromiseOrValue<string>,
       _burnProof: PromiseOrValue<BytesLike>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    currentAuctionId(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     end(
@@ -1117,11 +1123,6 @@ export interface OptimisticBid extends BaseContract {
 
     WETH_ADDRESS(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    auctionIds(
-      arg0: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     batchWithdrawERC1155(
       _vault: PromiseOrValue<string>,
       _token: PromiseOrValue<string>,
@@ -1148,6 +1149,11 @@ export interface OptimisticBid extends BaseContract {
       _vault: PromiseOrValue<string>,
       _burnProof: PromiseOrValue<BytesLike>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    currentAuctionId(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     end(
