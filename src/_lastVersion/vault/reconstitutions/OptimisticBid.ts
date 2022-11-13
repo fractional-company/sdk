@@ -222,7 +222,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         return await executeTransaction({
           connection: this.connection,
           contract: this.#contract,
-          method: 'cash',
+          method: 'end',
           args: [this.vaultAddress, burnProof]
         });
       } catch (e) {
