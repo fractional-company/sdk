@@ -27,7 +27,7 @@ export class VaultFactory {
     chainId = CHAINS.MAINNET
   }: FactoryConfig) {
     if (typeof chainId === 'string') {
-      chainId = parseInt(chainId)
+      chainId = parseInt(chainId);
     }
     if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
     if (!address && !fractionSchema)
