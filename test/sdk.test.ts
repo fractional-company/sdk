@@ -35,7 +35,7 @@ describe('LPDA', () => {
     const tx = await vaultFactory.deployArtEnjoyer({
       curator: wallet.address,
       tokenAddress: '0x1652F52A6581031bb220a280e6dC68629dE72602',
-      tokenId: '4479',
+      tokenId: '4481',
       startTime,
       endTime,
       dropPerSecond,

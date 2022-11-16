@@ -1,8 +1,7 @@
 import { TransactionResponse } from '@ethersproject/providers';
 import { BigNumber, BigNumberish } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
-import { NullAddress, Proofs } from '../../constants';
-import { Contract } from '../../constants';
+import { Contract, NullAddress, Proofs } from '../../constants';
 import {
   LPDA as LPDAInterface,
   LPDA__factory as LPDAFactory,
@@ -80,7 +79,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
           supply: info.supply,
           numSold: info.numSold,
           curator: info.curator,
-          curatorClaimed: Boolean(info.curatorClaimed.toString())
+          curatorClaimed: Boolean(info.curatorClaimed.toNumber())
         };
       } catch (e) {
         throw new Error(formatError(e));
