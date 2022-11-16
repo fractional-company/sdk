@@ -1,4 +1,5 @@
 import { Vault } from '../core/Vault';
-import { LPDAModule } from '../distributions/LPDA';
+import { LPDAInfo, LPDAModule, LPDAState } from '../distributions/LPDA';
 
 export const LPDA = LPDAModule(Vault);
+export { LPDAInfo, LPDAState };

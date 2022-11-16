@@ -35,6 +35,19 @@ export enum LPDAEvents {
   CuratorRedeemedNFT = 'CuratorRedeemedNFT'
 }
 
+export interface LPDAInfo {
+  startTime: number;
+  endTime: number;
+  dropPerSecond: string;
+  startPrice: string;
+  endPrice: string;
+  minBid: string;
+  supply: number;
+  numSold: number;
+  curator: string;
+  curatorClaimed: boolean;
+}
+
 export function LPDAModule<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     #address: string;
@@ -49,7 +62,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
     // ======== Read Methods ========
 
-    public async getAuction() {
+    public async getAuction(): Promise<LPDAInfo> {
       try {
         const info = await this.#contract.vaultLPDAInfo(this.vaultAddress);
 

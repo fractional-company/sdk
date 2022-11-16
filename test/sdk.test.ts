@@ -26,7 +26,7 @@ describe('LPDA', () => {
   it('should deploy an LPDA vault', async () => {
     return;
     const startTime = ((new Date().valueOf() + 60000) / 1000).toFixed(0); // 1 minute from now
-    const seconds = 1200; // 10 minutes from now
+    const seconds = 500; // 10 minutes from now
     const endTime = (parseInt(startTime) + seconds).toFixed(0);
     const dropPerSecond = parseEther('0.000000000000000001').toString();
     const startPrice = BigNumber.from(dropPerSecond).mul(seconds);
@@ -35,14 +35,14 @@ describe('LPDA', () => {
     const tx = await vaultFactory.deployArtEnjoyer({
       curator: wallet.address,
       tokenAddress: '0x1652F52A6581031bb220a280e6dC68629dE72602',
-      tokenId: '4476',
+      tokenId: '4479',
       startTime,
       endTime,
       dropPerSecond,
       startPrice,
       endPrice,
       minBid: '0',
-      supply: '1000'
+      supply: '1'
     });
 
     expect(tx).toBeDefined();
