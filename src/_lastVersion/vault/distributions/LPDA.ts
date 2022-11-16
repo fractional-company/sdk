@@ -2,7 +2,7 @@ import { TransactionResponse } from '@ethersproject/providers';
 import { BigNumber, BigNumberish } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
 import { NullAddress, Proofs } from '../../constants';
-import { Contract } from '../../constants/contracts';
+import { Contract } from '../../constants';
 import {
   LPDA as LPDAInterface,
   LPDA__factory as LPDAFactory,
@@ -51,20 +51,20 @@ export interface LPDAInfo {
 export function LPDAModule<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     #address: string;
-    #contract: LPDAInterface;
+    lpdaContract: LPDAInterface;
 
     constructor(...args: any[]) {
       super(...args);
 
       this.#address = getContractAddress(Contract.LPDA, this.chainId);
-      this.#contract = LPDAFactory.connect(this.#address, this.connection);
+      this.lpdaContract = LPDAFactory.connect(this.#address, this.connection);
     }
 
     // ======== Read Methods ========
 
     public async getAuction(): Promise<LPDAInfo> {
       try {
-        const info = await this.#contract.vaultLPDAInfo(this.vaultAddress);
+        const info = await this.lpdaContract.vaultLPDAInfo(this.vaultAddress);
 
         if (info.curator === NullAddress) {
           throw new Error('Vault has no auction');
@@ -98,7 +98,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       };
 
       try {
-        const currentState = await this.#contract.getAuctionState(this.vaultAddress);
+        const currentState = await this.lpdaContract.getAuctionState(this.vaultAddress);
         return state[currentState];
       } catch (e) {
         throw new Error(formatError(e));
@@ -111,7 +111,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       }
 
       try {
-        const balance = await this.#contract.balanceContributed(this.vaultAddress, address);
+        const balance = await this.lpdaContract.balanceContributed(this.vaultAddress, address);
         return balance.toString();
       } catch (e) {
         throw new Error(formatError(e));
@@ -124,7 +124,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       }
 
       try {
-        const balance = await this.#contract.balanceRefunded(this.vaultAddress, address);
+        const balance = await this.lpdaContract.balanceRefunded(this.vaultAddress, address);
         return balance.toString();
       } catch (e) {
         throw new Error(formatError(e));
@@ -133,8 +133,8 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
     public async getBids() {
       try {
-        const events = await this.#contract.queryFilter(
-          this.#contract.filters.BidEntered(this.vaultAddress)
+        const events = await this.lpdaContract.queryFilter(
+          this.lpdaContract.filters.BidEntered(this.vaultAddress)
         );
 
         return events.map((event) => ({
@@ -151,7 +151,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
     public async getCurrentPrice(): Promise<string> {
       try {
-        const price = await this.#contract.currentPrice(this.vaultAddress);
+        const price = await this.lpdaContract.currentPrice(this.vaultAddress);
         return price.toString();
       } catch (e) {
         throw new Error(formatError(e));
@@ -160,7 +160,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
     public async getLPDAFeeReceiver() {
       try {
-        return await this.#contract.feeReceiver();
+        return await this.lpdaContract.feeReceiver();
       } catch (e) {
         throw new Error(formatError(e));
       }
@@ -168,7 +168,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
     public async getMinters(): Promise<string[]> {
       try {
-        const minters = await this.#contract.getMinters(this.vaultAddress);
+        const minters = await this.lpdaContract.getMinters(this.vaultAddress);
         return [...new Set(minters)];
       } catch (e) {
         throw new Error(formatError(e));
@@ -183,7 +183,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       try {
         const wallet = await getCurrentWallet(this.connection);
         const addressToLookup = address || wallet.address;
-        const num = await this.#contract.numMinted(this.vaultAddress, addressToLookup);
+        const num = await this.lpdaContract.numMinted(this.vaultAddress, addressToLookup);
         return num.toNumber();
       } catch (e) {
         throw new Error(formatError(e));
@@ -196,7 +196,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       }
 
       try {
-        const refund = await this.#contract.refundOwed(this.vaultAddress, address);
+        const refund = await this.lpdaContract.refundOwed(this.vaultAddress, address);
         return refund.toString();
       } catch (e) {
         throw new Error(formatError(e));
@@ -221,7 +221,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
         return await executeTransaction({
           connection: this.connection,
-          contract: this.#contract,
+          contract: this.lpdaContract,
           method: 'enterBid',
           args: [this.vaultAddress, amount],
           options: { value: totalValue }
@@ -246,7 +246,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
         return await executeTransaction({
           connection: this.connection,
-          contract: this.#contract,
+          contract: this.lpdaContract,
           method: 'redeemNFTCurator',
           args: [this.vaultAddress, tokenAddress, tokenId, redeemProof]
         });
@@ -266,7 +266,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
         return await executeTransaction({
           connection: this.connection,
-          contract: this.#contract,
+          contract: this.lpdaContract,
           method: 'settleAddress',
           args: [this.vaultAddress, addressToSettle]
         });
@@ -292,11 +292,11 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
         }[] = [];
 
         for (const address of addresses) {
-          const callData = this.#contract.interface.encodeFunctionData('settleAddress', [
+          const callData = this.lpdaContract.interface.encodeFunctionData('settleAddress', [
             this.vaultAddress,
             address
           ]);
-          const target = this.#contract.address;
+          const target = this.lpdaContract.address;
           const allowFailure = true;
           data.push({ target, allowFailure, callData });
         }
@@ -316,7 +316,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       try {
         return await executeTransaction({
           connection: this.connection,
-          contract: this.#contract,
+          contract: this.lpdaContract,
           method: 'settleCurator',
           args: [this.vaultAddress]
         });
@@ -333,7 +333,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       try {
         return await executeTransaction({
           connection: this.connection,
-          contract: this.#contract,
+          contract: this.lpdaContract,
           method: 'updateFeeReceiver',
           args: [receiver]
         });
@@ -352,8 +352,8 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
         blockNumber: number;
       }) => void
     ) {
-      this.#contract.on(
-        this.#contract.filters.BidEntered(this.vaultAddress),
+      this.lpdaContract.on(
+        this.lpdaContract.filters.BidEntered(this.vaultAddress),
         (vault, user, quantity, price, event) => {
           callback({
             bidderAddress: user,
@@ -367,7 +367,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
     }
 
     public unsubscribeFromBids() {
-      this.#contract.removeAllListeners(this.#contract.filters.BidEntered(this.vaultAddress));
+      this.lpdaContract.removeAllListeners(this.lpdaContract.filters.BidEntered(this.vaultAddress));
     }
 
     // ======== Gas Estimation ========
@@ -379,7 +379,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
           return await estimateTransactionGas({
             connection: this.connection,
-            contract: this.#contract,
+            contract: this.lpdaContract,
             method: 'enterBid',
             args: [this.vaultAddress, amount],
             options: { value: totalValue }
@@ -394,7 +394,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
           return await estimateTransactionGas({
             connection: this.connection,
-            contract: this.#contract,
+            contract: this.lpdaContract,
             method: 'redeemNFTCurator',
             args: [this.vaultAddress, tokenAddress, tokenId, redeemProof]
           });
@@ -411,7 +411,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
           return await estimateTransactionGas({
             connection: this.connection,
-            contract: this.#contract,
+            contract: this.lpdaContract,
             method: 'settleAddress',
             args: [this.vaultAddress, minter]
           });
@@ -423,7 +423,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
         try {
           return await estimateTransactionGas({
             connection: this.connection,
-            contract: this.#contract,
+            contract: this.lpdaContract,
             method: 'settleCurator',
             args: [this.vaultAddress]
           });
@@ -435,7 +435,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
         try {
           return await estimateTransactionGas({
             connection: this.connection,
-            contract: this.#contract,
+            contract: this.lpdaContract,
             method: 'updateFeeReceiver',
             args: [receiver]
           });

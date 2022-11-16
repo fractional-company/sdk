@@ -20,7 +20,7 @@ import {
   isValidTokenStandard
 } from '../../utils';
 import { Constructor } from '../core/Vault';
-import { Connection, GasData } from '../../types/types';
+import { GasData } from '../../types/types';
 
 export enum OptimisticBidState {
   Inactive = 'INACTIVE',
@@ -43,20 +43,20 @@ export interface OptimisticBidInfo {
 export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     #address: string;
-    #contract: OptimisticBidInterface;
+    optimisticBidContract: OptimisticBidInterface;
 
     constructor(...args: any[]) {
       super(...args);
 
       this.#address = getContractAddress(Contract.OptimisticBid, this.chainId);
-      this.#contract = OptimisticBidFactory.connect(this.#address, this.connection);
+      this.optimisticBidContract = OptimisticBidFactory.connect(this.#address, this.connection);
     }
 
     // ======== Read Methods ========
 
     public async getOptimisticBidFeeReceiver(): Promise<string> {
       try {
-        return await this.#contract.feeReceiver();
+        return await this.optimisticBidContract.feeReceiver();
       } catch (e) {
         throw new Error(formatError(e));
       }
@@ -64,7 +64,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
 
     public async getRejectionPeriod(): Promise<number> {
       try {
-        const period = await this.#contract.REJECTION_PERIOD();
+        const period = await this.optimisticBidContract.REJECTION_PERIOD();
         return parseInt(period.toString()) * 1000; // convert to milliseconds
       } catch (e) {
         throw new Error(formatError(e));
@@ -107,7 +107,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
     }
 
     async #getAuctionId(): Promise<number> {
-      const auctionId = await this.#contract.currentAuctionId(this.vaultAddress);
+      const auctionId = await this.optimisticBidContract.currentAuctionId(this.vaultAddress);
       return parseInt(auctionId.toString());
     }
 
@@ -123,7 +123,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         2: OptimisticBidState.Success
       };
 
-      const buyoutInfo = await this.#contract.buyoutInfo(this.vaultAddress, auctionId);
+      const buyoutInfo = await this.optimisticBidContract.buyoutInfo(this.vaultAddress, auctionId);
 
       if (!rejectionPeriod) {
         rejectionPeriod = await this.getRejectionPeriod();
@@ -178,7 +178,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
 
       return {
         connection: this.connection,
-        contract: this.#contract,
+        contract: this.optimisticBidContract,
         method: 'buy',
         args: [this.vaultAddress, amount],
         options: { value: totalValue }
@@ -214,7 +214,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
 
       return {
         connection: this.connection,
-        contract: this.#contract,
+        contract: this.optimisticBidContract,
         method: 'cash',
         args: [this.vaultAddress, burnProof]
       };
@@ -243,7 +243,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
 
       return {
         connection: this.connection,
-        contract: this.#contract,
+        contract: this.optimisticBidContract,
         method: 'end',
         args: [this.vaultAddress, burnProof]
       };
@@ -278,7 +278,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
 
       return {
         connection: this.connection,
-        contract: this.#contract,
+        contract: this.optimisticBidContract,
         method: 'redeem',
         args: [this.vaultAddress, burnProof]
       };
@@ -325,7 +325,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
 
       return {
         connection: this.connection,
-        contract: this.#contract,
+        contract: this.optimisticBidContract,
         method: 'start',
         args: [this.vaultAddress, amount],
         options: { value: weiValue }
@@ -347,7 +347,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
       }
       return {
         connection: this.connection,
-        contract: this.#contract,
+        contract: this.optimisticBidContract,
         method: 'updateFeeReceiver',
         args: [feeReceiver]
       };
@@ -375,7 +375,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
 
       return {
         connection: this.connection,
-        contract: this.#contract,
+        contract: this.optimisticBidContract,
         method: 'withdraw',
         args: [this.vaultAddress, buyout.auctionId]
       };
@@ -464,7 +464,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
             }
 
             encodedData.push(
-              this.#contract.interface.encodeFunctionData('withdrawERC20', [
+              this.optimisticBidContract.interface.encodeFunctionData('withdrawERC20', [
                 this.vaultAddress,
                 token.address,
                 tokenReceiver,
@@ -480,7 +480,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
             }
 
             encodedData.push(
-              this.#contract.interface.encodeFunctionData('withdrawERC721', [
+              this.optimisticBidContract.interface.encodeFunctionData('withdrawERC721', [
                 this.vaultAddress,
                 token.address,
                 tokenReceiver,
@@ -520,7 +520,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
       // Create encoded data for ERC1155 transactions
       for (const erc1155Token of Object.values(erc1155Tokens)) {
         encodedData.push(
-          this.#contract.interface.encodeFunctionData('batchWithdrawERC1155', [
+          this.optimisticBidContract.interface.encodeFunctionData('batchWithdrawERC1155', [
             this.vaultAddress,
             erc1155Token.address,
             erc1155Token.receiver,
@@ -533,7 +533,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
 
       return {
         connection: this.connection,
-        contract: this.#contract,
+        contract: this.optimisticBidContract,
         method: 'multicall',
         args: [encodedData]
       };
