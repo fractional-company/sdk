@@ -1,6 +1,6 @@
 {
   "name": "@fractional-company/sdk",
-  "version": "0.0.12-development",
+  "version": "0.0.13-development",
   "description": "Fractional SDK",
   "keywords": [
     "ethereum",
@@ -65,7 +65,7 @@
     }
   },
   "dependencies": {
-    "@fractional-company/common": "^0.0.71",
+    "@fractional-company/common": "^1.2.71",
     "ethers": "^5.6.8"
   },
   "devDependencies": {

@@ -8,6 +8,8 @@ import {
 } from '../../contracts';
 import { FERC1155 } from '../../tokens/FERC1155';
 import {
+  Config,
+  estimateTransactionGas,
   executeTransaction,
   formatError,
   getContractAddress,
@@ -18,6 +20,7 @@ import {
   isValidTokenStandard
 } from '../../utils';
 import { Constructor } from '../core/Vault';
+import { Connection, GasData } from '../../types/types';
 
 export enum OptimisticBidState {
   Inactive = 'INACTIVE',
@@ -145,125 +148,155 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
     // ======== Write Methods ========
 
     public async buyRaes(amount: BigNumberish): Promise<TransactionResponse> {
+      try {
+        const config = await this.#buyRaes(amount);
+        return await executeTransaction(config);
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
+
+    async #buyRaes(amount: BigNumberish): Promise<Config> {
       if (!isValidAmount(amount)) {
         throw new Error('Invalid rae amount');
       }
 
-      try {
-        const buyout = await this.getBuyout();
-        if (!buyout || buyout.state !== OptimisticBidState.Live) {
-          throw new Error('Auction is not live');
-        }
-
-        if (BigNumber.from(amount).gt(buyout.raeBalance)) {
-          throw new Error('Amount is greater than rae balance');
-        }
-
-        const totalValue = BigNumber.from(buyout.raePrice).mul(amount);
-        const wallet = await getCurrentWallet(this.connection);
-        if (wallet.balance.lt(totalValue)) {
-          throw new Error('Insufficient ETH balance');
-        }
-
-        return await executeTransaction({
-          connection: this.connection,
-          contract: this.#contract,
-          method: 'buy',
-          args: [this.vaultAddress, amount],
-          options: { value: totalValue }
-        });
-      } catch (e) {
-        throw new Error(formatError(e));
+      const buyout = await this.getBuyout();
+      if (!buyout || buyout.state !== OptimisticBidState.Live) {
+        throw new Error('Auction is not live');
       }
+
+      if (BigNumber.from(amount).gt(buyout.raeBalance)) {
+        throw new Error('Amount is greater than rae balance');
+      }
+
+      const totalValue = BigNumber.from(buyout.raePrice).mul(amount);
+      const wallet = await getCurrentWallet(this.connection);
+      if (wallet.balance.lt(totalValue)) {
+        throw new Error('Insufficient ETH balance');
+      }
+
+      return {
+        connection: this.connection,
+        contract: this.#contract,
+        method: 'buy',
+        args: [this.vaultAddress, amount],
+        options: { value: totalValue }
+      };
     }
 
     public async cashProceeds(): Promise<TransactionResponse> {
       try {
-        const buyout = await this.getBuyout();
-        if (!buyout || buyout.state !== OptimisticBidState.Success) {
-          throw new Error('Buyout is not successful');
-        }
+        const config = await this.#cashProceeds();
 
-        const { tokenId } = await this.getTokenInfo();
-        const wallet = await getCurrentWallet(this.connection);
-
-        const ferc1155 = new FERC1155(this.connection, this.chainId);
-        const raeBalance = await ferc1155.balanceOf(wallet.address, tokenId);
-        if (BigNumber.from(raeBalance).isZero()) {
-          throw new Error('No rae balance');
-        }
-
-        const { burnProof } = Proofs[this.chainId];
-
-        return await executeTransaction({
-          connection: this.connection,
-          contract: this.#contract,
-          method: 'cash',
-          args: [this.vaultAddress, burnProof]
-        });
+        return await executeTransaction(config);
       } catch (e) {
         throw new Error(formatError(e));
       }
+    }
+
+    async #cashProceeds(): Promise<Config> {
+      const buyout = await this.getBuyout();
+      if (!buyout || buyout.state !== OptimisticBidState.Success) {
+        throw new Error('Buyout is not successful');
+      }
+
+      const { tokenId } = await this.getTokenInfo();
+      const wallet = await getCurrentWallet(this.connection);
+
+      const ferc1155 = new FERC1155(this.connection, this.chainId);
+      const raeBalance = await ferc1155.balanceOf(wallet.address, tokenId);
+      if (BigNumber.from(raeBalance).isZero()) {
+        throw new Error('No rae balance');
+      }
+
+      const { burnProof } = Proofs[this.chainId];
+
+      return {
+        connection: this.connection,
+        contract: this.#contract,
+        method: 'cash',
+        args: [this.vaultAddress, burnProof]
+      };
     }
 
     public async endBuyout(): Promise<TransactionResponse> {
       try {
-        const buyout = await this.getBuyout();
-        if (!buyout || buyout.state !== OptimisticBidState.Live) {
-          throw new Error('Auction is not live');
-        }
-
-        if (buyout.endTime >= Date.now()) {
-          throw new Error('Auction is not over');
-        }
-
-        const { burnProof } = Proofs[this.chainId];
-
-        return await executeTransaction({
-          connection: this.connection,
-          contract: this.#contract,
-          method: 'end',
-          args: [this.vaultAddress, burnProof]
-        });
+        const config = await this.#endBuyout();
+        return await executeTransaction(config);
       } catch (e) {
         throw new Error(formatError(e));
       }
     }
 
+    async #endBuyout(): Promise<Config> {
+      const buyout = await this.getBuyout();
+      if (!buyout || buyout.state !== OptimisticBidState.Live) {
+        throw new Error('Auction is not live');
+      }
+
+      if (buyout.endTime >= Date.now()) {
+        throw new Error('Auction is not over');
+      }
+
+      const { burnProof } = Proofs[this.chainId];
+
+      return {
+        connection: this.connection,
+        contract: this.#contract,
+        method: 'end',
+        args: [this.vaultAddress, burnProof]
+      };
+    }
+
     public async redeemNFT(): Promise<TransactionResponse> {
       try {
-        const buyout = await this.getBuyout();
-        if (buyout && buyout.state !== OptimisticBidState.Inactive) {
-          throw new Error('Auction must be inactive to redeem');
-        }
-
-        const { tokenId } = await this.getTokenInfo();
-        const wallet = await getCurrentWallet(this.connection);
-
-        const ferc1155 = new FERC1155(this.connection, this.chainId);
-        const raeBalance = await ferc1155.balanceOf(wallet.address, tokenId);
-        const totalSupply = await ferc1155.totalSupply(tokenId);
-        if (!BigNumber.from(raeBalance).eq(totalSupply)) {
-          throw new Error('Redeemer must own all the rae supply');
-        }
-
-        const { burnProof } = Proofs[this.chainId];
-
-        return await executeTransaction({
-          connection: this.connection,
-          contract: this.#contract,
-          method: 'redeem',
-          args: [this.vaultAddress, burnProof]
-        });
+        const config = await this.#redeemNFT();
+        return await executeTransaction(config);
       } catch (e) {
         throw new Error(formatError(e));
       }
+    }
+
+    async #redeemNFT(): Promise<Config> {
+      const buyout = await this.getBuyout();
+      if (buyout && buyout.state !== OptimisticBidState.Inactive) {
+        throw new Error('Auction must be inactive to redeem');
+      }
+
+      const { tokenId } = await this.getTokenInfo();
+      const wallet = await getCurrentWallet(this.connection);
+
+      const ferc1155 = new FERC1155(this.connection, this.chainId);
+      const raeBalance = await ferc1155.balanceOf(wallet.address, tokenId);
+      const totalSupply = await ferc1155.totalSupply(tokenId);
+      if (!BigNumber.from(raeBalance).eq(totalSupply)) {
+        throw new Error('Redeemer must own all the rae supply');
+      }
+
+      const { burnProof } = Proofs[this.chainId];
+
+      return {
+        connection: this.connection,
+        contract: this.#contract,
+        method: 'redeem',
+        args: [this.vaultAddress, burnProof]
+      };
     }
 
     public async startBuyout(
       amount: BigNumberish,
       value: BigNumberish
     ): Promise<TransactionResponse> {
+      try {
+        const config = await this.#startBuyout(amount, value);
+        return await executeTransaction(config);
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
+
+    async #startBuyout(amount: BigNumberish, value: BigNumberish): Promise<Config> {
       if (!isValidAmount(amount)) {
         throw new Error('Invalid rae amount');
       }
@@ -272,75 +305,80 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         throw new Error('Invalid ETH value');
       }
 
+      const weiValue = parseEther(value.toString());
+      const wallet = await getCurrentWallet(this.connection);
+      if (wallet.balance.lt(weiValue)) {
+        throw new Error('Insufficient ETH balance');
+      }
+
+      const { tokenId } = await this.getTokenInfo();
+      const ferc1155 = new FERC1155(this.connection, this.chainId);
+      const isApproved = await ferc1155.isApproved(wallet.address, this.#address, tokenId);
+      if (!isApproved) {
+        throw new Error('Must approve Optimistic Bid contract to transfer raes');
+      }
+
+      const raeBalance = await ferc1155.balanceOf(wallet.address, tokenId);
+      if (BigNumber.from(raeBalance).lt(1)) {
+        throw new Error('Must own at least one rae to start a buyout');
+      }
+
+      return {
+        connection: this.connection,
+        contract: this.#contract,
+        method: 'start',
+        args: [this.vaultAddress, amount],
+        options: { value: weiValue }
+      };
+    }
+
+    public async updateOptimisticBidFeeReceiver(feeReceiver: string): Promise<TransactionResponse> {
       try {
-        const weiValue = parseEther(value.toString());
-        const wallet = await getCurrentWallet(this.connection);
-        if (wallet.balance.lt(weiValue)) {
-          throw new Error('Insufficient ETH balance');
-        }
-
-        const { tokenId } = await this.getTokenInfo();
-        const ferc1155 = new FERC1155(this.connection, this.chainId);
-        const isApproved = await ferc1155.isApproved(wallet.address, this.#address, tokenId);
-        if (!isApproved) {
-          throw new Error('Must approve Optimistic Bid contract to transfer raes');
-        }
-
-        const raeBalance = await ferc1155.balanceOf(wallet.address, tokenId);
-        if (BigNumber.from(raeBalance).lt(1)) {
-          throw new Error('Must own at least one rae to start a buyout');
-        }
-
-        return await executeTransaction({
-          connection: this.connection,
-          contract: this.#contract,
-          method: 'start',
-          args: [this.vaultAddress, amount],
-          options: { value: weiValue }
-        });
+        const config = this.#updateOptimisticBidFeeReceiver(feeReceiver);
+        return await executeTransaction(config);
       } catch (e) {
         throw new Error(formatError(e));
       }
     }
 
-    public async updateOptimisticBidFeeReceiver(feeReceiver: string): Promise<TransactionResponse> {
+    #updateOptimisticBidFeeReceiver(feeReceiver: string): Config {
       if (!isAddress(feeReceiver)) {
         throw new Error('Invalid fee receiver address');
       }
-
-      try {
-        return await executeTransaction({
-          connection: this.connection,
-          contract: this.#contract,
-          method: 'updateFeeReceiver',
-          args: [feeReceiver]
-        });
-      } catch (e) {
-        throw new Error(formatError(e));
-      }
+      return {
+        connection: this.connection,
+        contract: this.#contract,
+        method: 'updateFeeReceiver',
+        args: [feeReceiver]
+      };
     }
 
     public async withdrawBalance(auctionId?: string): Promise<TransactionResponse> {
       try {
-        const buyout = await this.getBuyout(auctionId);
-        if (!buyout || buyout.state !== OptimisticBidState.Inactive) {
-          throw new Error('Auction must be inactive to withdraw balance');
-        }
-
-        const wallet = await getCurrentWallet(this.connection);
-        if (buyout.proposer !== wallet.address) {
-          throw new Error('Only auction proposer can withdraw balance');
-        }
-
-        return await executeTransaction({
-          connection: this.connection,
-          contract: this.#contract,
-          method: 'withdraw',
-          args: [this.vaultAddress, buyout.auctionId]
-        });
+        const config = await this.#withdrawBalance(auctionId);
+        return await executeTransaction(config);
       } catch (e) {
         throw new Error(formatError(e));
       }
+    }
+
+    async #withdrawBalance(auctionId?: string): Promise<Config> {
+      const buyout = await this.getBuyout(auctionId);
+      if (!buyout || buyout.state !== OptimisticBidState.Inactive) {
+        throw new Error('Auction must be inactive to withdraw balance');
+      }
+
+      const wallet = await getCurrentWallet(this.connection);
+      if (buyout.proposer !== wallet.address) {
+        throw new Error('Only auction proposer can withdraw balance');
+      }
+
+      return {
+        connection: this.connection,
+        contract: this.#contract,
+        method: 'withdraw',
+        args: [this.vaultAddress, buyout.auctionId]
+      };
     }
 
     public async withdrawTokens(
@@ -352,6 +390,23 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         receiver?: string;
       }[]
     ): Promise<TransactionResponse> {
+      try {
+        const config = await this.#withdrawTokens(tokens);
+        return await executeTransaction(config);
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
+
+    async #withdrawTokens(
+      tokens: {
+        standard: TokenStandard;
+        address: string;
+        id?: BigNumberish;
+        amount?: BigNumberish;
+        receiver?: string;
+      }[]
+    ): Promise<Config> {
       if (!Array.isArray(tokens)) {
         throw new Error('Tokens must be an array');
       }
@@ -360,132 +415,140 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         throw new Error('Tokens array must not be empty');
       }
 
-      try {
-        const buyout = await this.getBuyout();
-        if (!buyout || buyout.state !== OptimisticBidState.Success) {
-          throw new Error('Auction must be successful to withdraw NFTs');
-        }
-
-        const wallet = await getCurrentWallet(this.connection);
-        if (buyout.proposer !== wallet.address) {
-          throw new Error('Only auction proposer can withdraw NFTs');
-        }
-
-        const { withdrawERC20Proof, withdrawERC721Proof, batchWithdrawERC1155Proof } =
-          Proofs[this.chainId];
-
-        // Each key is "tokenAddress_tokenReceiver"
-        const erc1155Tokens: {
-          [key: string]: {
-            receiver: string;
-            address: string;
-            ids: BigNumberish[];
-            amounts: BigNumberish[];
-          };
-        } = {};
-
-        const encodedData: string[] = [];
-
-        for (const token of tokens) {
-          if (!isValidTokenStandard(token.standard)) {
-            throw new Error(`Invalid token standard ${token.standard}`);
-          }
-
-          if (!isAddress(token.address)) {
-            throw new Error(`Invalid token address ${token.address}`);
-          }
-
-          if (token.receiver && !isAddress(token.receiver)) {
-            throw new Error(`Invalid receiver address ${token.receiver}`);
-          }
-
-          const tokenReceiver = token.receiver || wallet.address;
-          const tokenStandard = token.standard.toUpperCase();
-          const erc1155Key = `${token.address}_${tokenReceiver}`;
-
-          switch (tokenStandard) {
-            case TokenStandard.ERC20:
-              if (!token.amount || !isValidAmount(token.amount)) {
-                throw new Error(`ERC20 token ${token.address} amount is invalid`);
-              }
-
-              encodedData.push(
-                this.#contract.interface.encodeFunctionData('withdrawERC20', [
-                  this.vaultAddress,
-                  token.address,
-                  tokenReceiver,
-                  token.amount,
-                  withdrawERC20Proof
-                ])
-              );
-
-              break;
-            case TokenStandard.ERC721:
-              if (!token.id || !isValidTokenId(token.id)) {
-                throw new Error(`ERC721 token ${token.address} id is invalid`);
-              }
-
-              encodedData.push(
-                this.#contract.interface.encodeFunctionData('withdrawERC721', [
-                  this.vaultAddress,
-                  token.address,
-                  tokenReceiver,
-                  token.id,
-                  withdrawERC721Proof
-                ])
-              );
-
-              break;
-            case TokenStandard.ERC1155:
-              if (!token.id || !isValidTokenId(token.id)) {
-                throw new Error(`ERC1155 token ${token.address} id is invalid`);
-              }
-
-              if (!token.amount || !isValidAmount(token.amount)) {
-                throw new Error(`ERC1155 token ${token.address} amount is invalid`);
-              }
-
-              if (erc1155Tokens[erc1155Key]) {
-                erc1155Tokens[erc1155Key].ids.push(token.id);
-                erc1155Tokens[erc1155Key].amounts.push(token.amount);
-              } else {
-                erc1155Tokens[erc1155Key] = {
-                  receiver: tokenReceiver,
-                  address: token.address,
-                  ids: [token.id],
-                  amounts: [token.amount]
-                };
-              }
-
-              break;
-            default:
-              throw new Error(`Token standard ${token.standard} not supported`);
-          }
-        }
-
-        // Create encoded data for ERC1155 transactions
-        for (const erc1155Token of Object.values(erc1155Tokens)) {
-          encodedData.push(
-            this.#contract.interface.encodeFunctionData('batchWithdrawERC1155', [
-              this.vaultAddress,
-              erc1155Token.address,
-              erc1155Token.receiver,
-              erc1155Token.ids,
-              erc1155Token.amounts,
-              batchWithdrawERC1155Proof
-            ])
-          );
-        }
-
-        return await executeTransaction({
-          connection: this.connection,
-          contract: this.#contract,
-          method: 'multicall',
-          args: [encodedData]
-        });
-      } catch (e) {
-        throw new Error(formatError(e));
+      const buyout = await this.getBuyout();
+      if (!buyout || buyout.state !== OptimisticBidState.Success) {
+        throw new Error('Auction must be successful to withdraw NFTs');
       }
+
+      const wallet = await getCurrentWallet(this.connection);
+      if (buyout.proposer !== wallet.address) {
+        throw new Error('Only auction proposer can withdraw NFTs');
+      }
+
+      const { withdrawERC20Proof, withdrawERC721Proof, batchWithdrawERC1155Proof } =
+        Proofs[this.chainId];
+
+      // Each key is "tokenAddress_tokenReceiver"
+      const erc1155Tokens: {
+        [key: string]: {
+          receiver: string;
+          address: string;
+          ids: BigNumberish[];
+          amounts: BigNumberish[];
+        };
+      } = {};
+
+      const encodedData: string[] = [];
+
+      for (const token of tokens) {
+        if (!isValidTokenStandard(token.standard)) {
+          throw new Error(`Invalid token standard ${token.standard}`);
+        }
+
+        if (!isAddress(token.address)) {
+          throw new Error(`Invalid token address ${token.address}`);
+        }
+
+        if (token.receiver && !isAddress(token.receiver)) {
+          throw new Error(`Invalid receiver address ${token.receiver}`);
+        }
+
+        const tokenReceiver = token.receiver || wallet.address;
+        const tokenStandard = token.standard.toUpperCase();
+        const erc1155Key = `${token.address}_${tokenReceiver}`;
+
+        switch (tokenStandard) {
+          case TokenStandard.ERC20:
+            if (!token.amount || !isValidAmount(token.amount)) {
+              throw new Error(`ERC20 token ${token.address} amount is invalid`);
+            }
+
+            encodedData.push(
+              this.#contract.interface.encodeFunctionData('withdrawERC20', [
+                this.vaultAddress,
+                token.address,
+                tokenReceiver,
+                token.amount,
+                withdrawERC20Proof
+              ])
+            );
+
+            break;
+          case TokenStandard.ERC721:
+            if (!token.id || !isValidTokenId(token.id)) {
+              throw new Error(`ERC721 token ${token.address} id is invalid`);
+            }
+
+            encodedData.push(
+              this.#contract.interface.encodeFunctionData('withdrawERC721', [
+                this.vaultAddress,
+                token.address,
+                tokenReceiver,
+                token.id,
+                withdrawERC721Proof
+              ])
+            );
+
+            break;
+          case TokenStandard.ERC1155:
+            if (!token.id || !isValidTokenId(token.id)) {
+              throw new Error(`ERC1155 token ${token.address} id is invalid`);
+            }
+
+            if (!token.amount || !isValidAmount(token.amount)) {
+              throw new Error(`ERC1155 token ${token.address} amount is invalid`);
+            }
+
+            if (erc1155Tokens[erc1155Key]) {
+              erc1155Tokens[erc1155Key].ids.push(token.id);
+              erc1155Tokens[erc1155Key].amounts.push(token.amount);
+            } else {
+              erc1155Tokens[erc1155Key] = {
+                receiver: tokenReceiver,
+                address: token.address,
+                ids: [token.id],
+                amounts: [token.amount]
+              };
+            }
+
+            break;
+          default:
+            throw new Error(`Token standard ${token.standard} not supported`);
+        }
+      }
+
+      // Create encoded data for ERC1155 transactions
+      for (const erc1155Token of Object.values(erc1155Tokens)) {
+        encodedData.push(
+          this.#contract.interface.encodeFunctionData('batchWithdrawERC1155', [
+            this.vaultAddress,
+            erc1155Token.address,
+            erc1155Token.receiver,
+            erc1155Token.ids,
+            erc1155Token.amounts,
+            batchWithdrawERC1155Proof
+          ])
+        );
+      }
+
+      return {
+        connection: this.connection,
+        contract: this.#contract,
+        method: 'multicall',
+        args: [encodedData]
+      };
     }
+
+    // ======== Gas Estimation ========
+    public estimateGas = {
+      buyRaes: async (amount: BigNumberish): Promise<GasData> => {
+        try {
+          const options = await this.#buyRaes(amount);
+          return await estimateTransactionGas(options);
+        } catch (e) {
+          throw new Error(formatError(e));
+        }
+      }
+    };
   };
 }

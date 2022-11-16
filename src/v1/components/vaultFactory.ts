@@ -26,6 +26,9 @@ export class VaultFactory {
     signerOrProvider,
     chainId = CHAINS.MAINNET
   }: FactoryConfig) {
+    if (typeof chainId === 'string') {
+      chainId = parseInt(chainId)
+    }
     if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
     if (!address && !fractionSchema)
       throw new Error('Factory address or fraction schema is required');

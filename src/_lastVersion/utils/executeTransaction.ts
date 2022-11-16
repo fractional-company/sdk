@@ -9,7 +9,7 @@ interface ContractOverrides {
   value?: BigNumberish;
 }
 
-interface Config {
+export interface Config {
   connection: Connection;
   contract: Contract;
   method: string;

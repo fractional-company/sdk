@@ -2,7 +2,7 @@ import { Contract, Signer } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
 import { isAddress } from '@ethersproject/address';
 import { isValidChain } from './isValidChain';
-import { FactoryItem } from '../types/types';
+
 import {
   getFactoryContractsMappedForChain,
   TYPE_VAULT_FACTORY,
@@ -14,16 +14,22 @@ export async function getFactoryAddress(
   signerOrProvider: Signer | Provider,
   chainId: number | string = CHAINS.MAINNET
 ): Promise<string> {
+  if (typeof chainId === 'string') {
+    chainId = parseInt(chainId);
+  }
   if (!isAddress(vaultAddress)) throw new Error('Vault address is not valid');
   if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
   if (!Provider.isProvider(signerOrProvider) && !Signer.isSigner(signerOrProvider))
     throw new Error('Provider/Signer is not valid');
 
-  const factories: FactoryItem[] = getFactoryContractsMappedForChain(chainId)[TYPE_VAULT_FACTORY];
+  const factories = getFactoryContractsMappedForChain(chainId)[TYPE_VAULT_FACTORY];
 
   for (const factory of factories) {
     const factoryContract = new Contract(factory.contractAddress, factory.abi, signerOrProvider);
-    const events = await factoryContract.queryFilter(factoryContract.filters.Mint(), factory.block);
+    const events = await factoryContract.queryFilter(
+      factoryContract.filters.Mint(),
+      factory.blockNumber
+    );
     for (const event of events) {
       if (event?.args?.vault === vaultAddress) {
         return factory.contractAddress;

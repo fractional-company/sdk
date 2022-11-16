@@ -19,6 +19,9 @@ export class BasketFactory {
   private signerOrProvider: Signer | Provider;
 
   constructor({ signerOrProvider, chainId = CHAINS.MAINNET, address }: BasketFactoryConfig) {
+    if (typeof chainId === 'string') {
+      chainId = parseInt(chainId);
+    }
     if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
     if (address && !isAddress(address)) throw new Error('Factory address is not valid');
 

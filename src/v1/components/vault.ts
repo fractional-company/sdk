@@ -6,7 +6,7 @@ import { TransactionReceipt } from '@ethersproject/providers';
 import { isAddress } from '@ethersproject/address';
 import { isValidChain } from '../utilities';
 import { executeTransaction } from '../helpers';
-import { VaultConfig, FactoryItem } from '../types/types';
+import { VaultConfig } from '../types/types';
 import {
   getFactoryContractsMappedForChain,
   TYPE_VAULT_FACTORY,
@@ -32,7 +32,9 @@ export class Vault {
     if (!isAddress(factoryAddress)) throw new Error('Factory address is not valid');
     if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
 
-    const factories: FactoryItem[] = getFactoryContractsMappedForChain(chainId)[TYPE_VAULT_FACTORY];
+    const factories = getFactoryContractsMappedForChain(parseInt(chainId as string))[
+      TYPE_VAULT_FACTORY
+    ];
     const factory = factories.find((factory) => factory.contractAddress === factoryAddress);
     if (!factory) throw new Error(`Vault factory contract ${factoryAddress} does not exist`);
 
