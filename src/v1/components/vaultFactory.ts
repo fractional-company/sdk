@@ -1,17 +1,17 @@
-import { Signer, Contract } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
 import { isAddress } from '@ethersproject/address';
 import { TransactionReceipt } from '@ethersproject/providers';
-import { isValidFractionSchema, isValidChain } from '../utilities';
-import { executeTransaction } from '../helpers';
-import { FactoryItem, FactoryConfig, VaultData } from '../types/types';
 import {
-  getVaultItem,
+  CHAINS,
   getLatestVaultItem,
-  SCHEMA_ERC20,
+  getVaultItem,
   SCHEMA_ERC1155,
-  CHAINS
+  SCHEMA_ERC20
 } from '@fractional-company/common';
+import { Contract, Signer } from 'ethers';
+import { executeTransaction } from '../helpers';
+import { FactoryConfig, FactoryItem, VaultData } from '../types/types';
+import { isValidChain, isValidFractionSchema } from '../utilities';
 
 export class VaultFactory {
   public fractionSchema: string;
@@ -27,7 +27,7 @@ export class VaultFactory {
     chainId = CHAINS.MAINNET
   }: FactoryConfig) {
     if (typeof chainId === 'string') {
-      chainId = parseInt(chainId)
+      chainId = parseInt(chainId);
     }
     if (!isValidChain(chainId)) throw new Error('Chain ID is not valid');
     if (!address && !fractionSchema)
