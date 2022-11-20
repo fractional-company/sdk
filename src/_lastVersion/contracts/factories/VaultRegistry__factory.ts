@@ -133,6 +133,79 @@ const _abi = [
         name: "_selectors",
         type: "bytes4[]",
       },
+      {
+        components: [
+          {
+            internalType: "address",
+            name: "target",
+            type: "address",
+          },
+          {
+            internalType: "bytes",
+            name: "data",
+            type: "bytes",
+          },
+          {
+            internalType: "bytes32[]",
+            name: "proof",
+            type: "bytes32[]",
+          },
+        ],
+        internalType: "struct InitInfo[]",
+        name: "_calls",
+        type: "tuple[]",
+      },
+    ],
+    name: "create",
+    outputs: [
+      {
+        internalType: "address",
+        name: "vault",
+        type: "address",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "_merkleRoot",
+        type: "bytes32",
+      },
+      {
+        internalType: "address[]",
+        name: "_plugins",
+        type: "address[]",
+      },
+      {
+        internalType: "bytes4[]",
+        name: "_selectors",
+        type: "bytes4[]",
+      },
+      {
+        components: [
+          {
+            internalType: "address",
+            name: "target",
+            type: "address",
+          },
+          {
+            internalType: "bytes",
+            name: "data",
+            type: "bytes",
+          },
+          {
+            internalType: "bytes32[]",
+            name: "proof",
+            type: "bytes32[]",
+          },
+        ],
+        internalType: "struct InitInfo[]",
+        name: "_calls",
+        type: "tuple[]",
+      },
     ],
     name: "createCollection",
     outputs: [
@@ -172,6 +245,28 @@ const _abi = [
         name: "_selectors",
         type: "bytes4[]",
       },
+      {
+        components: [
+          {
+            internalType: "address",
+            name: "target",
+            type: "address",
+          },
+          {
+            internalType: "bytes",
+            name: "data",
+            type: "bytes",
+          },
+          {
+            internalType: "bytes32[]",
+            name: "proof",
+            type: "bytes32[]",
+          },
+        ],
+        internalType: "struct InitInfo[]",
+        name: "_calls",
+        type: "tuple[]",
+      },
     ],
     name: "createCollectionFor",
     outputs: [
@@ -183,6 +278,62 @@ const _abi = [
       {
         internalType: "address",
         name: "token",
+        type: "address",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "_merkleRoot",
+        type: "bytes32",
+      },
+      {
+        internalType: "address",
+        name: "_owner",
+        type: "address",
+      },
+      {
+        internalType: "address[]",
+        name: "_plugins",
+        type: "address[]",
+      },
+      {
+        internalType: "bytes4[]",
+        name: "_selectors",
+        type: "bytes4[]",
+      },
+      {
+        components: [
+          {
+            internalType: "address",
+            name: "target",
+            type: "address",
+          },
+          {
+            internalType: "bytes",
+            name: "data",
+            type: "bytes",
+          },
+          {
+            internalType: "bytes32[]",
+            name: "proof",
+            type: "bytes32[]",
+          },
+        ],
+        internalType: "struct InitInfo[]",
+        name: "_calls",
+        type: "tuple[]",
+      },
+    ],
+    name: "createFor",
+    outputs: [
+      {
+        internalType: "address",
+        name: "vault",
         type: "address",
       },
     ],
@@ -244,6 +395,28 @@ const _abi = [
         internalType: "bytes4[]",
         name: "_selectors",
         type: "bytes4[]",
+      },
+      {
+        components: [
+          {
+            internalType: "address",
+            name: "target",
+            type: "address",
+          },
+          {
+            internalType: "bytes",
+            name: "data",
+            type: "bytes",
+          },
+          {
+            internalType: "bytes32[]",
+            name: "proof",
+            type: "bytes32[]",
+          },
+        ],
+        internalType: "struct InitInfo[]",
+        name: "_calls",
+        type: "tuple[]",
       },
     ],
     name: "createInCollection",

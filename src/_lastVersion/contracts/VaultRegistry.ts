@@ -27,14 +27,28 @@ import type {
   PromiseOrValue,
 } from "./common";
 
+export type InitInfoStruct = {
+  target: PromiseOrValue<string>;
+  data: PromiseOrValue<BytesLike>;
+  proof: PromiseOrValue<BytesLike>[];
+};
+
+export type InitInfoStructOutput = [string, string, string[]] & {
+  target: string;
+  data: string;
+  proof: string[];
+};
+
 export interface VaultRegistryInterface extends utils.Interface {
   functions: {
     "burn(address,uint256)": FunctionFragment;
     "create(bytes32,address[],bytes4[])": FunctionFragment;
-    "createCollection(bytes32,address[],bytes4[])": FunctionFragment;
-    "createCollectionFor(bytes32,address,address[],bytes4[])": FunctionFragment;
+    "create(bytes32,address[],bytes4[],(address,bytes,bytes32[])[])": FunctionFragment;
+    "createCollection(bytes32,address[],bytes4[],(address,bytes,bytes32[])[])": FunctionFragment;
+    "createCollectionFor(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])": FunctionFragment;
+    "createFor(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])": FunctionFragment;
     "createFor(bytes32,address,address[],bytes4[])": FunctionFragment;
-    "createInCollection(bytes32,address,address[],bytes4[])": FunctionFragment;
+    "createInCollection(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])": FunctionFragment;
     "fNFT()": FunctionFragment;
     "fNFTImplementation()": FunctionFragment;
     "factory()": FunctionFragment;
@@ -48,10 +62,12 @@ export interface VaultRegistryInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "burn"
-      | "create"
+      | "create(bytes32,address[],bytes4[])"
+      | "create(bytes32,address[],bytes4[],(address,bytes,bytes32[])[])"
       | "createCollection"
       | "createCollectionFor"
-      | "createFor"
+      | "createFor(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])"
+      | "createFor(bytes32,address,address[],bytes4[])"
       | "createInCollection"
       | "fNFT"
       | "fNFTImplementation"
@@ -68,7 +84,7 @@ export interface VaultRegistryInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
-    functionFragment: "create",
+    functionFragment: "create(bytes32,address[],bytes4[])",
     values: [
       PromiseOrValue<BytesLike>,
       PromiseOrValue<string>[],
@@ -76,11 +92,21 @@ export interface VaultRegistryInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "create(bytes32,address[],bytes4[],(address,bytes,bytes32[])[])",
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<string>[],
+      PromiseOrValue<BytesLike>[],
+      InitInfoStruct[]
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "createCollection",
     values: [
       PromiseOrValue<BytesLike>,
       PromiseOrValue<string>[],
-      PromiseOrValue<BytesLike>[]
+      PromiseOrValue<BytesLike>[],
+      InitInfoStruct[]
     ]
   ): string;
   encodeFunctionData(
@@ -89,11 +115,22 @@ export interface VaultRegistryInterface extends utils.Interface {
       PromiseOrValue<BytesLike>,
       PromiseOrValue<string>,
       PromiseOrValue<string>[],
-      PromiseOrValue<BytesLike>[]
+      PromiseOrValue<BytesLike>[],
+      InitInfoStruct[]
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "createFor",
+    functionFragment: "createFor(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])",
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>[],
+      PromiseOrValue<BytesLike>[],
+      InitInfoStruct[]
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "createFor(bytes32,address,address[],bytes4[])",
     values: [
       PromiseOrValue<BytesLike>,
       PromiseOrValue<string>,
@@ -107,7 +144,8 @@ export interface VaultRegistryInterface extends utils.Interface {
       PromiseOrValue<BytesLike>,
       PromiseOrValue<string>,
       PromiseOrValue<string>[],
-      PromiseOrValue<BytesLike>[]
+      PromiseOrValue<BytesLike>[],
+      InitInfoStruct[]
     ]
   ): string;
   encodeFunctionData(functionFragment: "fNFT", values?: undefined): string;
@@ -138,7 +176,14 @@ export interface VaultRegistryInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "burn", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "create", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "create(bytes32,address[],bytes4[])",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "create(bytes32,address[],bytes4[],(address,bytes,bytes32[])[])",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "createCollection",
     data: BytesLike
@@ -147,7 +192,14 @@ export interface VaultRegistryInterface extends utils.Interface {
     functionFragment: "createCollectionFor",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "createFor", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "createFor(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "createFor(bytes32,address,address[],bytes4[])",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "createInCollection",
     data: BytesLike
@@ -222,10 +274,18 @@ export interface VaultRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    create(
+    "create(bytes32,address[],bytes4[])"(
       _merkleRoot: PromiseOrValue<BytesLike>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    "create(bytes32,address[],bytes4[],(address,bytes,bytes32[])[])"(
+      _merkleRoot: PromiseOrValue<BytesLike>,
+      _plugins: PromiseOrValue<string>[],
+      _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -233,6 +293,7 @@ export interface VaultRegistry extends BaseContract {
       _merkleRoot: PromiseOrValue<BytesLike>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -241,10 +302,20 @@ export interface VaultRegistry extends BaseContract {
       _controller: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    createFor(
+    "createFor(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])"(
+      _merkleRoot: PromiseOrValue<BytesLike>,
+      _owner: PromiseOrValue<string>,
+      _plugins: PromiseOrValue<string>[],
+      _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    "createFor(bytes32,address,address[],bytes4[])"(
       _merkleRoot: PromiseOrValue<BytesLike>,
       _owner: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
@@ -257,6 +328,7 @@ export interface VaultRegistry extends BaseContract {
       _token: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -299,10 +371,18 @@ export interface VaultRegistry extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  create(
+  "create(bytes32,address[],bytes4[])"(
     _merkleRoot: PromiseOrValue<BytesLike>,
     _plugins: PromiseOrValue<string>[],
     _selectors: PromiseOrValue<BytesLike>[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  "create(bytes32,address[],bytes4[],(address,bytes,bytes32[])[])"(
+    _merkleRoot: PromiseOrValue<BytesLike>,
+    _plugins: PromiseOrValue<string>[],
+    _selectors: PromiseOrValue<BytesLike>[],
+    _calls: InitInfoStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -310,6 +390,7 @@ export interface VaultRegistry extends BaseContract {
     _merkleRoot: PromiseOrValue<BytesLike>,
     _plugins: PromiseOrValue<string>[],
     _selectors: PromiseOrValue<BytesLike>[],
+    _calls: InitInfoStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -318,10 +399,20 @@ export interface VaultRegistry extends BaseContract {
     _controller: PromiseOrValue<string>,
     _plugins: PromiseOrValue<string>[],
     _selectors: PromiseOrValue<BytesLike>[],
+    _calls: InitInfoStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  createFor(
+  "createFor(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])"(
+    _merkleRoot: PromiseOrValue<BytesLike>,
+    _owner: PromiseOrValue<string>,
+    _plugins: PromiseOrValue<string>[],
+    _selectors: PromiseOrValue<BytesLike>[],
+    _calls: InitInfoStruct[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  "createFor(bytes32,address,address[],bytes4[])"(
     _merkleRoot: PromiseOrValue<BytesLike>,
     _owner: PromiseOrValue<string>,
     _plugins: PromiseOrValue<string>[],
@@ -334,6 +425,7 @@ export interface VaultRegistry extends BaseContract {
     _token: PromiseOrValue<string>,
     _plugins: PromiseOrValue<string>[],
     _selectors: PromiseOrValue<BytesLike>[],
+    _calls: InitInfoStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -376,10 +468,18 @@ export interface VaultRegistry extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    create(
+    "create(bytes32,address[],bytes4[])"(
       _merkleRoot: PromiseOrValue<BytesLike>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    "create(bytes32,address[],bytes4[],(address,bytes,bytes32[])[])"(
+      _merkleRoot: PromiseOrValue<BytesLike>,
+      _plugins: PromiseOrValue<string>[],
+      _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -387,6 +487,7 @@ export interface VaultRegistry extends BaseContract {
       _merkleRoot: PromiseOrValue<BytesLike>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: CallOverrides
     ): Promise<[string, string] & { vault: string; token: string }>;
 
@@ -395,10 +496,20 @@ export interface VaultRegistry extends BaseContract {
       _controller: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: CallOverrides
     ): Promise<[string, string] & { vault: string; token: string }>;
 
-    createFor(
+    "createFor(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])"(
+      _merkleRoot: PromiseOrValue<BytesLike>,
+      _owner: PromiseOrValue<string>,
+      _plugins: PromiseOrValue<string>[],
+      _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    "createFor(bytes32,address,address[],bytes4[])"(
       _merkleRoot: PromiseOrValue<BytesLike>,
       _owner: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
@@ -411,6 +522,7 @@ export interface VaultRegistry extends BaseContract {
       _token: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -467,10 +579,18 @@ export interface VaultRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    create(
+    "create(bytes32,address[],bytes4[])"(
       _merkleRoot: PromiseOrValue<BytesLike>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    "create(bytes32,address[],bytes4[],(address,bytes,bytes32[])[])"(
+      _merkleRoot: PromiseOrValue<BytesLike>,
+      _plugins: PromiseOrValue<string>[],
+      _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -478,6 +598,7 @@ export interface VaultRegistry extends BaseContract {
       _merkleRoot: PromiseOrValue<BytesLike>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -486,10 +607,20 @@ export interface VaultRegistry extends BaseContract {
       _controller: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    createFor(
+    "createFor(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])"(
+      _merkleRoot: PromiseOrValue<BytesLike>,
+      _owner: PromiseOrValue<string>,
+      _plugins: PromiseOrValue<string>[],
+      _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    "createFor(bytes32,address,address[],bytes4[])"(
       _merkleRoot: PromiseOrValue<BytesLike>,
       _owner: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
@@ -502,6 +633,7 @@ export interface VaultRegistry extends BaseContract {
       _token: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -545,10 +677,18 @@ export interface VaultRegistry extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    create(
+    "create(bytes32,address[],bytes4[])"(
       _merkleRoot: PromiseOrValue<BytesLike>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "create(bytes32,address[],bytes4[],(address,bytes,bytes32[])[])"(
+      _merkleRoot: PromiseOrValue<BytesLike>,
+      _plugins: PromiseOrValue<string>[],
+      _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -556,6 +696,7 @@ export interface VaultRegistry extends BaseContract {
       _merkleRoot: PromiseOrValue<BytesLike>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -564,10 +705,20 @@ export interface VaultRegistry extends BaseContract {
       _controller: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    createFor(
+    "createFor(bytes32,address,address[],bytes4[],(address,bytes,bytes32[])[])"(
+      _merkleRoot: PromiseOrValue<BytesLike>,
+      _owner: PromiseOrValue<string>,
+      _plugins: PromiseOrValue<string>[],
+      _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "createFor(bytes32,address,address[],bytes4[])"(
       _merkleRoot: PromiseOrValue<BytesLike>,
       _owner: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
@@ -580,6 +731,7 @@ export interface VaultRegistry extends BaseContract {
       _token: PromiseOrValue<string>,
       _plugins: PromiseOrValue<string>[],
       _selectors: PromiseOrValue<BytesLike>[],
+      _calls: InitInfoStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

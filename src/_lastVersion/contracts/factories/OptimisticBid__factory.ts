@@ -150,6 +150,49 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
+        name: "_token",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "_auctionId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "_recipient",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "_tokenIds",
+        type: "uint256[]",
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "_amounts",
+        type: "uint256[]",
+      },
+    ],
+    name: "BatchWithdrawERC1155",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_vault",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
         name: "_buyer",
         type: "address",
       },
@@ -322,6 +365,123 @@ const _abi = [
       },
     ],
     name: "Start",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_vault",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_token",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "_auctionId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "_recipient",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "_tokenId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "_amount",
+        type: "uint256",
+      },
+    ],
+    name: "WithdrawERC1155",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_vault",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_token",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "_auctionId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "_recipient",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "_amount",
+        type: "uint256",
+      },
+    ],
+    name: "WithdrawERC20",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_vault",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "_token",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "_auctionId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "_recipient",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "_tokenId",
+        type: "uint256",
+      },
+    ],
+    name: "WithdrawERC721",
     type: "event",
   },
   {

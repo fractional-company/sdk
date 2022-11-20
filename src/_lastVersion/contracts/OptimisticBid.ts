@@ -334,19 +334,43 @@ export interface OptimisticBidInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "BatchWithdrawERC1155(address,address,uint256,address,uint256[],uint256[])": EventFragment;
     "BuyRaes(address,address,uint256,uint256)": EventFragment;
     "Cash(address,address,uint256,uint256)": EventFragment;
     "End(address,uint8,address,uint256)": EventFragment;
     "Redeem(address,address)": EventFragment;
     "Start(address,address,uint256,uint256,tuple)": EventFragment;
+    "WithdrawERC1155(address,address,uint256,address,uint256,uint256)": EventFragment;
+    "WithdrawERC20(address,address,uint256,address,uint256)": EventFragment;
+    "WithdrawERC721(address,address,uint256,address,uint256)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "BatchWithdrawERC1155"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "BuyRaes"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Cash"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "End"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Redeem"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Start"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "WithdrawERC1155"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "WithdrawERC20"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "WithdrawERC721"): EventFragment;
 }
+
+export interface BatchWithdrawERC1155EventObject {
+  _vault: string;
+  _token: string;
+  _auctionId: BigNumber;
+  _recipient: string;
+  _tokenIds: BigNumber[];
+  _amounts: BigNumber[];
+}
+export type BatchWithdrawERC1155Event = TypedEvent<
+  [string, string, BigNumber, string, BigNumber[], BigNumber[]],
+  BatchWithdrawERC1155EventObject
+>;
+
+export type BatchWithdrawERC1155EventFilter =
+  TypedEventFilter<BatchWithdrawERC1155Event>;
 
 export interface BuyRaesEventObject {
   _vault: string;
@@ -408,6 +432,49 @@ export type StartEvent = TypedEvent<
 >;
 
 export type StartEventFilter = TypedEventFilter<StartEvent>;
+
+export interface WithdrawERC1155EventObject {
+  _vault: string;
+  _token: string;
+  _auctionId: BigNumber;
+  _recipient: string;
+  _tokenId: BigNumber;
+  _amount: BigNumber;
+}
+export type WithdrawERC1155Event = TypedEvent<
+  [string, string, BigNumber, string, BigNumber, BigNumber],
+  WithdrawERC1155EventObject
+>;
+
+export type WithdrawERC1155EventFilter = TypedEventFilter<WithdrawERC1155Event>;
+
+export interface WithdrawERC20EventObject {
+  _vault: string;
+  _token: string;
+  _auctionId: BigNumber;
+  _recipient: string;
+  _amount: BigNumber;
+}
+export type WithdrawERC20Event = TypedEvent<
+  [string, string, BigNumber, string, BigNumber],
+  WithdrawERC20EventObject
+>;
+
+export type WithdrawERC20EventFilter = TypedEventFilter<WithdrawERC20Event>;
+
+export interface WithdrawERC721EventObject {
+  _vault: string;
+  _token: string;
+  _auctionId: BigNumber;
+  _recipient: string;
+  _tokenId: BigNumber;
+}
+export type WithdrawERC721Event = TypedEvent<
+  [string, string, BigNumber, string, BigNumber],
+  WithdrawERC721EventObject
+>;
+
+export type WithdrawERC721EventFilter = TypedEventFilter<WithdrawERC721Event>;
 
 export interface OptimisticBid extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -913,6 +980,23 @@ export interface OptimisticBid extends BaseContract {
   };
 
   filters: {
+    "BatchWithdrawERC1155(address,address,uint256,address,uint256[],uint256[])"(
+      _vault?: PromiseOrValue<string> | null,
+      _token?: PromiseOrValue<string> | null,
+      _auctionId?: PromiseOrValue<BigNumberish> | null,
+      _recipient?: null,
+      _tokenIds?: null,
+      _amounts?: null
+    ): BatchWithdrawERC1155EventFilter;
+    BatchWithdrawERC1155(
+      _vault?: PromiseOrValue<string> | null,
+      _token?: PromiseOrValue<string> | null,
+      _auctionId?: PromiseOrValue<BigNumberish> | null,
+      _recipient?: null,
+      _tokenIds?: null,
+      _amounts?: null
+    ): BatchWithdrawERC1155EventFilter;
+
     "BuyRaes(address,address,uint256,uint256)"(
       _vault?: PromiseOrValue<string> | null,
       _buyer?: PromiseOrValue<string> | null,
@@ -975,6 +1059,53 @@ export interface OptimisticBid extends BaseContract {
       _buyoutPrice?: null,
       _auction?: null
     ): StartEventFilter;
+
+    "WithdrawERC1155(address,address,uint256,address,uint256,uint256)"(
+      _vault?: PromiseOrValue<string> | null,
+      _token?: PromiseOrValue<string> | null,
+      _auctionId?: PromiseOrValue<BigNumberish> | null,
+      _recipient?: null,
+      _tokenId?: null,
+      _amount?: null
+    ): WithdrawERC1155EventFilter;
+    WithdrawERC1155(
+      _vault?: PromiseOrValue<string> | null,
+      _token?: PromiseOrValue<string> | null,
+      _auctionId?: PromiseOrValue<BigNumberish> | null,
+      _recipient?: null,
+      _tokenId?: null,
+      _amount?: null
+    ): WithdrawERC1155EventFilter;
+
+    "WithdrawERC20(address,address,uint256,address,uint256)"(
+      _vault?: PromiseOrValue<string> | null,
+      _token?: PromiseOrValue<string> | null,
+      _auctionId?: PromiseOrValue<BigNumberish> | null,
+      _recipient?: null,
+      _amount?: null
+    ): WithdrawERC20EventFilter;
+    WithdrawERC20(
+      _vault?: PromiseOrValue<string> | null,
+      _token?: PromiseOrValue<string> | null,
+      _auctionId?: PromiseOrValue<BigNumberish> | null,
+      _recipient?: null,
+      _amount?: null
+    ): WithdrawERC20EventFilter;
+
+    "WithdrawERC721(address,address,uint256,address,uint256)"(
+      _vault?: PromiseOrValue<string> | null,
+      _token?: PromiseOrValue<string> | null,
+      _auctionId?: PromiseOrValue<BigNumberish> | null,
+      _recipient?: null,
+      _tokenId?: null
+    ): WithdrawERC721EventFilter;
+    WithdrawERC721(
+      _vault?: PromiseOrValue<string> | null,
+      _token?: PromiseOrValue<string> | null,
+      _auctionId?: PromiseOrValue<BigNumberish> | null,
+      _recipient?: null,
+      _tokenId?: null
+    ): WithdrawERC721EventFilter;
   };
 
   estimateGas: {
