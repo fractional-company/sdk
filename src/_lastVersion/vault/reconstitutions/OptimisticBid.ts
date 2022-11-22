@@ -540,7 +540,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
     }
 
     // ======== Gas Estimation ========
-    public estimateGas = {
+    public estimateGasOptimistic = {
       buyRaes: async (amount: BigNumberish): Promise<GasData> => {
         try {
           const options = await this.#buyRaes(amount);
