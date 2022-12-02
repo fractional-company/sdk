@@ -1,5 +1,5 @@
 import { TransactionResponse } from '@ethersproject/abstract-provider';
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish, BytesLike } from "ethers";
 import { isAddress, parseEther } from 'ethers/lib/utils';
 import { Contract, NullAddress, Proofs, TokenStandard } from '../../constants';
 import {
@@ -282,6 +282,29 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         method: 'redeem',
         args: [this.vaultAddress, burnProof]
       };
+    }
+
+    public async redeemNFTAndWithdrawTokens(
+      tokens: {
+        standard: TokenStandard;
+        address: string;
+        id?: BigNumberish;
+        amount?: BigNumberish;
+        receiver?: string;
+      }[]
+    ): Promise<TransactionResponse> {
+      try {
+        const { args } = await this.#redeemNFT();
+        const redeemEncoded = this.optimisticBidContract.interface.encodeFunctionData(
+          'redeem',
+          args as [string, BytesLike[]]
+        );
+        const configWithdrawTokens = await this.#withdrawTokens(tokens);
+        configWithdrawTokens.args?.unshift(redeemEncoded);
+        return await executeTransaction(configWithdrawTokens);
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
     }
 
     public async startBuyout(
