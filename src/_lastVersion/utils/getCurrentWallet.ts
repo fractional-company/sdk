@@ -4,6 +4,11 @@ import { Provider } from '@ethersproject/abstract-provider';
 import { BigNumber, Signer } from 'ethers';
 import { Connection } from '../types/types';
 
+export type Wallet = {
+  address: string;
+  balance: BigNumber;
+};
+
 export async function getCurrentWallet(connection: Connection): Promise<{
   address: string;
   balance: BigNumber;

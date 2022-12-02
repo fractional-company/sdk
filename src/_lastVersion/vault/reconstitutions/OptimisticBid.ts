@@ -1,5 +1,5 @@
 import { TransactionResponse } from '@ethersproject/abstract-provider';
-import { BigNumber, BigNumberish, BytesLike } from "ethers";
+import { BigNumber, BigNumberish, BytesLike } from 'ethers';
 import { isAddress, parseEther } from 'ethers/lib/utils';
 import { Contract, NullAddress, Proofs, TokenStandard } from '../../constants';
 import {
@@ -17,7 +17,8 @@ import {
   isNonNegativeEther,
   isValidAmount,
   isValidTokenId,
-  isValidTokenStandard
+  isValidTokenStandard,
+  Wallet
 } from '../../utils';
 import { Constructor } from '../core/Vault';
 import { GasData } from '../../types/types';
@@ -294,14 +295,14 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
       }[]
     ): Promise<TransactionResponse> {
       try {
-        const { args } = await this.#redeemNFT();
-        const redeemEncoded = this.optimisticBidContract.interface.encodeFunctionData(
+        const config = await this.#redeemNFT();
+        const withdrawEncodedData = await this.#encodedWithdrawTokenData(tokens);
+        const redeemEncodedEntry = this.optimisticBidContract.interface.encodeFunctionData(
           'redeem',
-          args as [string, BytesLike[]]
+          config.args as [string, BytesLike[]]
         );
-        const configWithdrawTokens = await this.#withdrawTokens(tokens);
-        configWithdrawTokens.args?.unshift(redeemEncoded);
-        return await executeTransaction(configWithdrawTokens);
+        const args = [redeemEncodedEntry, ...withdrawEncodedData];
+        return await executeTransaction({ ...config, args });
       } catch (e) {
         throw new Error(formatError(e));
       }
@@ -448,6 +449,27 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         throw new Error('Only auction proposer can withdraw NFTs');
       }
 
+      const encodedData = await this.#encodedWithdrawTokenData(tokens, wallet);
+
+      return {
+        connection: this.connection,
+        contract: this.optimisticBidContract,
+        method: 'multicall',
+        args: [encodedData]
+      };
+    }
+
+    async #encodedWithdrawTokenData(
+      tokens: {
+        standard: TokenStandard;
+        address: string;
+        id?: BigNumberish;
+        amount?: BigNumberish;
+        receiver?: string;
+      }[],
+      userWallet?: Wallet
+    ) {
+      const wallet = userWallet || (await getCurrentWallet(this.connection));
       const { withdrawERC20Proof, withdrawERC721Proof, batchWithdrawERC1155Proof } =
         Proofs[this.chainId];
 
@@ -553,13 +575,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
           ])
         );
       }
-
-      return {
-        connection: this.connection,
-        contract: this.optimisticBidContract,
-        method: 'multicall',
-        args: [encodedData]
-      };
+      return encodedData;
     }
 
     // ======== Gas Estimation ========
