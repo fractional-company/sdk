@@ -301,8 +301,8 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
           'redeem',
           config.args as [string, BytesLike[]]
         );
-        const args = [redeemEncodedEntry, ...withdrawEncodedData];
-        return await executeTransaction({ ...config, args });
+        const fullEncodedData = [redeemEncodedEntry, ...withdrawEncodedData];
+        return await executeTransaction({ ...config, args: [fullEncodedData] });
       } catch (e) {
         throw new Error(formatError(e));
       }
