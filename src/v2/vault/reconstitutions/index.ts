@@ -1,5 +1,5 @@
 import { Vault } from '../core/Vault';
-import { OptimisticBidModule } from './OptimisticBid';
+import { OptimisticBidModule, OptimisticBidState, OptimisticBidInfo } from './OptimisticBid';
 
 export const OptimisticBid = OptimisticBidModule(Vault);
-export * from './OptimisticBid';
+export { OptimisticBidState, OptimisticBidInfo };
