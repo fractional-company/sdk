@@ -1,1 +1,1 @@
-export * from './_lastVersion'; // todo: change
+export * from './v2';

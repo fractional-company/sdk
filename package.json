@@ -53,7 +53,7 @@
     "test:watch": "jest --watch",
     "test": "jest --coverage",
     "typecheck": "tsc --noEmit",
-    "typechain": "typechain --target ethers-v5 --out-dir src/_lastVersion/contracts src/_lastVersion/abis/*.json",
+    "typechain": "typechain --target ethers-v5 --out-dir src/v2/contracts src/v2/abis/*.json",
     "proofs": "ts-node --transpile-only ./scripts/generateProofs.ts"
   },
   "lint-staged": {

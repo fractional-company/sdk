@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import prettier from 'prettier';
 import { Chain, ContractAddresses } from '../src/';
-import { LPDA__factory } from '../src/_lastVersion/contracts';
+import { LPDA__factory } from '../src/v2/contracts';
 
 const { RPC_API_URL } = process.env;
 if (!RPC_API_URL) {
@@ -14,9 +14,9 @@ if (!RPC_API_URL) {
 const provider = new JsonRpcProvider(RPC_API_URL);
 
 const config = {
-  chains: [Chain.Goerli], // todo: add mainnet
+  chains: [Chain.Mainnet, Chain.Goerli],
   targetFile: 'proofs.ts',
-  outDir: path.join(__dirname, '../src/_lastVersion/proofs')
+  outDir: path.join(__dirname, '../src/v2/proofs')
 };
 
 const generateProofs = async (

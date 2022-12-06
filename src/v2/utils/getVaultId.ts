@@ -1,23 +1,20 @@
-import { Contract, Signer, BigNumber } from 'ethers';
-import { Provider } from '@ethersproject/abstract-provider';
 import { isAddress } from '@ethersproject/address';
-import { isValidChain, getChainId } from './index';
-import { Contracts } from '../common';
+import { BigNumber } from 'ethers';
+import { Chain, Contract } from '../constants';
+import { VaultRegistry__factory as VaultRegistryFactory } from '../contracts';
+import { Connection } from '../types/types';
+import { getChainId, getContractAddress, isValidChain } from './index';
 
-export async function getVaultId(
-  vaultAddress: string,
-  signerOrProvider: Signer | Provider
-): Promise<string> {
-  const chainId = await getChainId(signerOrProvider);
+export async function getVaultId(vaultAddress: string, connection: Connection): Promise<string> {
+  const chainId: Chain = await getChainId(connection);
   if (!isValidChain(chainId)) throw new Error(`Chain ${chainId} is not supported`);
   if (!isAddress(vaultAddress)) throw new Error(`Vault address ${vaultAddress} is not valid`);
 
-  const { ABI, address } = Contracts.VaultRegistry;
-  const vaultRegistry = new Contract(address[chainId], ABI, signerOrProvider);
+  const vaultRegistry = VaultRegistryFactory.connect(
+    getContractAddress(Contract.VaultRegistry, chainId),
+    connection
+  );
 
-  const events = await vaultRegistry.queryFilter(vaultRegistry.filters.VaultDeployed(vaultAddress));
-  if (events.length === 0) throw new Error(`Vault ${vaultAddress} does not exist`);
-
-  const id: BigNumber = events[0]?.args?._id;
-  return id.toString();
+  const response: [string, BigNumber] = await vaultRegistry.vaultToToken(vaultAddress);
+  return response[1].toString();
 }

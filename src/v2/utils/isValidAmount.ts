@@ -1,6 +1,6 @@
 import { BigNumber, BigNumberish } from 'ethers';
 
-export function isValidAmount(amount: BigNumberish | undefined): boolean {
+export function isValidAmount(amount: BigNumberish): boolean {
   if (amount === undefined) return false;
 
   try {

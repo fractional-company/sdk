@@ -1,15 +1,16 @@
 import { Signer } from 'ethers';
 import { Provider } from '@ethersproject/abstract-provider';
+import { Connection } from '../types/types';
 
-export async function getChainId(signerOrProvider: Signer | Provider): Promise<number> {
-  const isSigner = Signer.isSigner(signerOrProvider);
-  const isProvider = Provider.isProvider(signerOrProvider);
+export async function getChainId(connection: Connection): Promise<number> {
+  const isSigner = Signer.isSigner(connection);
+  const isProvider = Provider.isProvider(connection);
   if (!isSigner && !isProvider) throw new Error('Signer/Provider is not valid');
 
   if (isSigner) {
-    return await signerOrProvider.getChainId();
+    return await connection.getChainId();
   } else if (isProvider) {
-    const network = await signerOrProvider.getNetwork();
+    const network = await connection.getNetwork();
     return network.chainId;
   } else {
     throw new Error('Signer/Provider is not valid');

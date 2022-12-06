@@ -1,5 +1,5 @@
-import { Chains } from '../common/constants';
+import { Chain } from '../constants';
 
-export function isValidChain(chainId: number): boolean {
-  return [Chains.Mainnet, Chains.Rinkeby].includes(chainId);
+export function isValidChain(chainId: Chain): boolean {
+  return Object.values(Chain).includes(chainId);
 }

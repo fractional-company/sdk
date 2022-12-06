@@ -1,9 +1,10 @@
+import { BigNumberish } from 'ethers';
 import { parseEther } from 'ethers/lib/utils';
 
-export function isNonNegativeEther(value: string): boolean {
+export function isNonNegativeEther(value: BigNumberish): boolean {
   try {
-    const bigNumber = parseEther(value);
-    return bigNumber.gte(0);
+    const parsed = parseEther(value.toString());
+    return parsed.gte(0);
   } catch (e) {
     return false;
   }

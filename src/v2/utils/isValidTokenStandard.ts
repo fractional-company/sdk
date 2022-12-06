@@ -1,6 +1,6 @@
-import { TokenStandards } from '../common';
+import { TokenStandard } from '../constants';
 
 export function isValidTokenStandard(tokenStandard: string): boolean {
   if (typeof tokenStandard !== 'string') return false;
-  return Object.values(TokenStandards).includes(tokenStandard.toUpperCase());
+  return tokenStandard.toUpperCase() in TokenStandard;
 }

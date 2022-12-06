@@ -1,10 +1,16 @@
-import { Signer, Contract } from 'ethers';
-import { Provider } from '@ethersproject/abstract-provider';
-import { TransactionResponse, TransactionReceipt } from '@ethersproject/providers';
-import { ContractOverrides } from '../types/types';
+import { TransactionResponse } from '@ethersproject/providers';
+import { BigNumberish, Contract, Signer } from 'ethers';
+import { Connection } from '../types/types';
 
-interface Config {
-  signerOrProvider: Signer | Provider;
+interface ContractOverrides {
+  nonce?: BigNumberish;
+  gasLimit?: BigNumberish;
+  gasPrice?: BigNumberish;
+  value?: BigNumberish;
+}
+
+export interface Config {
+  connection: Connection;
   contract: Contract;
   method: string;
   args?: any[];
@@ -12,14 +18,16 @@ interface Config {
 }
 
 export async function executeTransaction({
-  signerOrProvider,
+  connection,
   contract,
   method,
   args = [],
   options = {}
-}: Config): Promise<TransactionReceipt> {
-  const nonce = await signerOrProvider.getTransactionCount('latest');
-  const { maxFeePerGas, maxPriorityFeePerGas } = await signerOrProvider.getFeeData();
+}: Config): Promise<TransactionResponse> {
+  if (!Signer.isSigner(connection)) throw new Error(`Method ${method} requires a signer`);
+
+  const nonce = await connection.getTransactionCount('latest');
+  const { maxFeePerGas, maxPriorityFeePerGas } = await connection.getFeeData();
   const gasLimit = await contract.estimateGas[method](...args, {
     ...options
   });
@@ -32,7 +40,5 @@ export async function executeTransaction({
     ...options
   });
 
-  if (!tx) throw new Error('Transaction failed');
-
-  return tx.wait();
+  return tx;
 }
