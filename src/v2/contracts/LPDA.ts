@@ -112,6 +112,8 @@ export interface LPDAInterface extends utils.Interface {
     "updateFeeReceiver(address)": FunctionFragment;
     "vaultLPDAInfo(address)": FunctionFragment;
     "vaultLPDAMinters(address,uint256)": FunctionFragment;
+    "vaultRoyaltyToken(address)": FunctionFragment;
+    "vaultRoyaltyTokenId(address)": FunctionFragment;
     "verifyProof(bytes32,bytes32[],bytes32)": FunctionFragment;
   };
 
@@ -150,6 +152,8 @@ export interface LPDAInterface extends utils.Interface {
       | "updateFeeReceiver"
       | "vaultLPDAInfo"
       | "vaultLPDAMinters"
+      | "vaultRoyaltyToken"
+      | "vaultRoyaltyTokenId"
       | "verifyProof"
   ): FunctionFragment;
 
@@ -301,6 +305,14 @@ export interface LPDAInterface extends utils.Interface {
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
+    functionFragment: "vaultRoyaltyToken",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "vaultRoyaltyTokenId",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "verifyProof",
     values: [
       PromiseOrValue<BytesLike>,
@@ -409,6 +421,14 @@ export interface LPDAInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "vaultRoyaltyToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "vaultRoyaltyTokenId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "verifyProof",
     data: BytesLike
   ): Result;
@@ -422,6 +442,7 @@ export interface LPDAInterface extends utils.Interface {
     "FeeDispersed(address,address,uint256)": EventFragment;
     "MintedRaes(address,address,uint256,uint256)": EventFragment;
     "Refunded(address,address,uint256)": EventFragment;
+    "RoyaltyPaid(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "ActiveModules"): EventFragment;
@@ -432,6 +453,7 @@ export interface LPDAInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "FeeDispersed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "MintedRaes"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Refunded"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoyaltyPaid"): EventFragment;
 }
 
 export interface ActiveModulesEventObject {
@@ -533,6 +555,18 @@ export type RefundedEvent = TypedEvent<
 >;
 
 export type RefundedEventFilter = TypedEventFilter<RefundedEvent>;
+
+export interface RoyaltyPaidEventObject {
+  _vault: string;
+  _royaltyReceiver: string;
+  _amount: BigNumber;
+}
+export type RoyaltyPaidEvent = TypedEvent<
+  [string, string, BigNumber],
+  RoyaltyPaidEventObject
+>;
+
+export type RoyaltyPaidEventFilter = TypedEventFilter<RoyaltyPaidEvent>;
 
 export interface LPDA extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -760,6 +794,16 @@ export interface LPDA extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
 
+    vaultRoyaltyToken(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[string]>;
+
+    vaultRoyaltyTokenId(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     verifyProof(
       _root: PromiseOrValue<BytesLike>,
       _proof: PromiseOrValue<BytesLike>[],
@@ -958,6 +1002,16 @@ export interface LPDA extends BaseContract {
     arg1: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<string>;
+
+  vaultRoyaltyToken(
+    arg0: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<string>;
+
+  vaultRoyaltyTokenId(
+    arg0: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   verifyProof(
     _root: PromiseOrValue<BytesLike>,
@@ -1160,6 +1214,16 @@ export interface LPDA extends BaseContract {
       overrides?: CallOverrides
     ): Promise<string>;
 
+    vaultRoyaltyToken(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<string>;
+
+    vaultRoyaltyTokenId(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     verifyProof(
       _root: PromiseOrValue<BytesLike>,
       _proof: PromiseOrValue<BytesLike>[],
@@ -1262,6 +1326,17 @@ export interface LPDA extends BaseContract {
       _user?: PromiseOrValue<string> | null,
       _balance?: null
     ): RefundedEventFilter;
+
+    "RoyaltyPaid(address,address,uint256)"(
+      _vault?: PromiseOrValue<string> | null,
+      _royaltyReceiver?: PromiseOrValue<string> | null,
+      _amount?: null
+    ): RoyaltyPaidEventFilter;
+    RoyaltyPaid(
+      _vault?: PromiseOrValue<string> | null,
+      _royaltyReceiver?: PromiseOrValue<string> | null,
+      _amount?: null
+    ): RoyaltyPaidEventFilter;
   };
 
   estimateGas: {
@@ -1429,6 +1504,16 @@ export interface LPDA extends BaseContract {
     vaultLPDAMinters(
       arg0: PromiseOrValue<string>,
       arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    vaultRoyaltyToken(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    vaultRoyaltyTokenId(
+      arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1605,6 +1690,16 @@ export interface LPDA extends BaseContract {
     vaultLPDAMinters(
       arg0: PromiseOrValue<string>,
       arg1: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    vaultRoyaltyToken(
+      arg0: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    vaultRoyaltyTokenId(
+      arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

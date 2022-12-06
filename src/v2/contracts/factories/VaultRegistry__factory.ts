@@ -95,45 +95,6 @@ const _abi = [
         type: "bytes32",
       },
       {
-        internalType: "address[]",
-        name: "_plugins",
-        type: "address[]",
-      },
-      {
-        internalType: "bytes4[]",
-        name: "_selectors",
-        type: "bytes4[]",
-      },
-    ],
-    name: "create",
-    outputs: [
-      {
-        internalType: "address",
-        name: "vault",
-        type: "address",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "_merkleRoot",
-        type: "bytes32",
-      },
-      {
-        internalType: "address[]",
-        name: "_plugins",
-        type: "address[]",
-      },
-      {
-        internalType: "bytes4[]",
-        name: "_selectors",
-        type: "bytes4[]",
-      },
-      {
         components: [
           {
             internalType: "address",
@@ -174,15 +135,24 @@ const _abi = [
         name: "_merkleRoot",
         type: "bytes32",
       },
+    ],
+    name: "create",
+    outputs: [
       {
-        internalType: "address[]",
-        name: "_plugins",
-        type: "address[]",
+        internalType: "address",
+        name: "vault",
+        type: "address",
       },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
       {
-        internalType: "bytes4[]",
-        name: "_selectors",
-        type: "bytes4[]",
+        internalType: "bytes32",
+        name: "_merkleRoot",
+        type: "bytes32",
       },
       {
         components: [
@@ -236,16 +206,6 @@ const _abi = [
         type: "address",
       },
       {
-        internalType: "address[]",
-        name: "_plugins",
-        type: "address[]",
-      },
-      {
-        internalType: "bytes4[]",
-        name: "_selectors",
-        type: "bytes4[]",
-      },
-      {
         components: [
           {
             internalType: "address",
@@ -296,15 +256,29 @@ const _abi = [
         name: "_owner",
         type: "address",
       },
+    ],
+    name: "createFor",
+    outputs: [
       {
-        internalType: "address[]",
-        name: "_plugins",
-        type: "address[]",
+        internalType: "address",
+        name: "vault",
+        type: "address",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "_merkleRoot",
+        type: "bytes32",
       },
       {
-        internalType: "bytes4[]",
-        name: "_selectors",
-        type: "bytes4[]",
+        internalType: "address",
+        name: "_owner",
+        type: "address",
       },
       {
         components: [
@@ -349,52 +323,8 @@ const _abi = [
       },
       {
         internalType: "address",
-        name: "_owner",
-        type: "address",
-      },
-      {
-        internalType: "address[]",
-        name: "_plugins",
-        type: "address[]",
-      },
-      {
-        internalType: "bytes4[]",
-        name: "_selectors",
-        type: "bytes4[]",
-      },
-    ],
-    name: "createFor",
-    outputs: [
-      {
-        internalType: "address",
-        name: "vault",
-        type: "address",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "_merkleRoot",
-        type: "bytes32",
-      },
-      {
-        internalType: "address",
         name: "_token",
         type: "address",
-      },
-      {
-        internalType: "address[]",
-        name: "_plugins",
-        type: "address[]",
-      },
-      {
-        internalType: "bytes4[]",
-        name: "_selectors",
-        type: "bytes4[]",
       },
       {
         components: [
@@ -428,32 +358,6 @@ const _abi = [
       },
     ],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "fNFT",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "fNFTImplementation",
-    outputs: [
-      {
-        internalType: "address",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {
@@ -501,6 +405,32 @@ const _abi = [
         internalType: "uint256",
         name: "",
         type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "rae",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "raeImplementation",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
       },
     ],
     stateMutability: "view",
