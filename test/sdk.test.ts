@@ -25,28 +25,39 @@ jest.setTimeout(60000);
 describe('LPDA', () => {
   it('should deploy an LPDA vault', async () => {
     return;
-    const startTime = ((new Date().valueOf() + 60000) / 1000).toFixed(0); // 1 minute from now
-    const seconds = 500; // 10 minutes from now
-    const endTime = (parseInt(startTime) + seconds).toFixed(0);
+    // Config
+    const startIn = 1; // minutes
+    const dropDuration = 5; // minutes
+    const bufferDuration = 4; // minutes
+
+    const supply = 5;
+
+    // Calculate values
+    const startTime = Math.floor(Date.now() / 1000) + startIn * 60;
+    const endTime = startTime + (dropDuration + bufferDuration) * 60;
+
     const dropPerSecond = parseEther('0.000000000000000001').toString();
-    const startPrice = BigNumber.from(dropPerSecond).mul(seconds);
-    const endPrice = '0';
+    const endPrice = parseEther('0.000000000000000001').toString();
+    const startPrice = BigNumber.from(dropPerSecond)
+      .mul(dropDuration * 60)
+      .sub(endPrice)
+      .toString();
 
     const tx = await vaultFactory.deployArtEnjoyer({
       curator: wallet.address,
       tokenAddress: '0x1652F52A6581031bb220a280e6dC68629dE72602',
-      tokenId: '4481',
+      tokenId: '4504',
       startTime,
       endTime,
       dropPerSecond,
       startPrice,
       endPrice,
-      minBid: '0',
-      supply: '1'
+      supply,
+      minBid: '0'
     });
 
-    expect(tx).toBeDefined();
     console.log(tx);
+    expect(tx).toBeDefined();
   });
 
   it('should enter a bid', async () => {
@@ -264,7 +275,7 @@ describe('OptimisticBid', () => {
   it('should withdraw NFTs', async () => {
     return;
     const vault = new ArtEnjoyer(
-      '0x6967812f478875abd4cf452972f99735bd99a507',
+      '0x05c11f1b96b371a2b443bda4ac48813ebf371382',
       wallet,
       Chain.Goerli
     );
@@ -272,7 +283,7 @@ describe('OptimisticBid', () => {
     const tx = await vault.withdrawTokens([
       {
         address: '0x1652F52A6581031bb220a280e6dC68629dE72602',
-        id: '4467',
+        id: '4502',
         standard: TokenStandard.ERC721
       }
     ]);
