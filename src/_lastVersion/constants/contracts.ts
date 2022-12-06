@@ -1,5 +1,5 @@
 import { Chain } from './chains';
-import { ART_ENJOYER_PROTOFORM, CHAINS } from "@fractional-company/common";
+import { ART_ENJOYER_PROTOFORM, CHAINS } from '@fractional-company/common';
 
 export enum Contract {
   FERC1155 = 'FERC1155',
