@@ -1,4 +1,5 @@
 import { Chain } from './chains';
+import { ART_ENJOYER_PROTOFORM, CHAINS } from "@fractional-company/common";
 
 export enum Contract {
   FERC1155 = 'FERC1155',
@@ -17,17 +18,17 @@ export const ContractAddresses: {
   };
 } = {
   [Mainnet]: {
-    [FERC1155]: '0x0000000000000000000000000000000000000000',
-    [LPDA]: '0x0000000000000000000000000000000000000000',
-    [OptimisticBid]: '0x0000000000000000000000000000000000000000',
-    [VaultRegistry]: '0x0000000000000000000000000000000000000000',
+    [FERC1155]: ART_ENJOYER_PROTOFORM.ferc[CHAINS.MAINNET].contractAddress,
+    [LPDA]: ART_ENJOYER_PROTOFORM.modules.lpda[CHAINS.MAINNET].contractAddress,
+    [OptimisticBid]: ART_ENJOYER_PROTOFORM.modules.optimisticBid[CHAINS.MAINNET].contractAddress,
+    [VaultRegistry]: ART_ENJOYER_PROTOFORM.factories.vaultRegistry[CHAINS.MAINNET].contractAddress,
     [Multicall]: '0xcA11bde05977b3631167028862bE2a173976CA11'
   },
   [Goerli]: {
-    [FERC1155]: '0x677984fd204AA15531Fe748aC7Ba14D659bec179',
-    [LPDA]: '0xAa4C9674097Cd9eC35c28Bf4715259f56334b2be',
-    [OptimisticBid]: '0xbA02B214a6780393d068929a8b82B72781e4b3b9',
-    [VaultRegistry]: '0x84506Be5Bb7486b035424Fbf8417Fcc2C8C384Ba',
+    [FERC1155]: ART_ENJOYER_PROTOFORM.ferc[CHAINS.GÖRLI].contractAddress,
+    [LPDA]: ART_ENJOYER_PROTOFORM.modules.lpda[CHAINS.GÖRLI].contractAddress,
+    [OptimisticBid]: ART_ENJOYER_PROTOFORM.modules.optimisticBid[CHAINS.GÖRLI].contractAddress,
+    [VaultRegistry]: ART_ENJOYER_PROTOFORM.factories.vaultRegistry[CHAINS.GÖRLI].contractAddress,
     [Multicall]: '0xcA11bde05977b3631167028862bE2a173976CA11'
   }
 };

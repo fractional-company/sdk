@@ -1,7 +1,7 @@
-import { proofs } from '../proofs/proofs';
 import { Chain } from './chains';
+import { ART_ENJOYER_PROTOFORM, CHAINS } from '@fractional-company/common';
 
 export const Proofs = {
-  [Chain.Mainnet]: proofs?.[Chain.Goerli], // todo: change to Mainnet
-  [Chain.Goerli]: proofs?.[Chain.Goerli]
+  [Chain.Mainnet]: ART_ENJOYER_PROTOFORM.proofs[CHAINS.MAINNET],
+  [Chain.Goerli]: ART_ENJOYER_PROTOFORM.proofs[CHAINS.GÖRLI]
 };
