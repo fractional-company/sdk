@@ -174,15 +174,13 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       }
     }
 
-    public async getNumMinted(address?: string) {
-      if (address && !isAddress(address)) {
+    public async getNumMinted(address: string) {
+      if (!isAddress(address)) {
         throw new Error('Invalid address');
       }
 
       try {
-        const wallet = await getCurrentWallet(this.connection);
-        const addressToLookup = address || wallet.address;
-        const num = await this.lpdaContract.numMinted(this.vaultAddress, addressToLookup);
+        const num = await this.lpdaContract.numMinted(this.vaultAddress, address);
         return num.toNumber();
       } catch (e) {
         throw new Error(formatError(e));
