@@ -44,7 +44,7 @@ export interface LPDAInfo {
   supply: number;
   numSold: number;
   curator: string;
-  curatorClaimed: boolean;
+  curatorClaimed: string;
 }
 
 export function LPDAModule<TBase extends Constructor>(Base: TBase) {
@@ -79,7 +79,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
           supply: info.supply,
           numSold: info.numSold,
           curator: info.curator,
-          curatorClaimed: Boolean(info.curatorClaimed.toNumber())
+          curatorClaimed: info.curatorClaimed.toString()
         };
       } catch (e) {
         throw new Error(formatError(e));
