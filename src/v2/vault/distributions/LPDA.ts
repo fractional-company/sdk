@@ -47,6 +47,14 @@ export interface LPDAInfo {
   curatorClaimed: string;
 }
 
+export interface LPDABid {
+  bidderAddress: string;
+  priceWei: string;
+  quantity: number;
+  transactionHash: string;
+  blockNumber: number;
+}
+
 export function LPDAModule<TBase extends Constructor>(Base: TBase) {
   return class extends Base {
     #address: string;
@@ -130,19 +138,29 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       }
     }
 
-    public async getBids() {
+    public async getBids(address?: string): Promise<LPDABid[]> {
+      if (address && !isAddress(address)) {
+        throw new Error('Invalid address');
+      }
+
       try {
         const events = await this.lpdaContract.queryFilter(
           this.lpdaContract.filters.BidEntered(this.vaultAddress)
         );
 
-        return events.map((event) => ({
+        const allBids = events.map((event) => ({
           bidderAddress: event.args._user,
           priceWei: event.args._price.toString(),
           quantity: event.args._quantity.toNumber(),
           transactionHash: event.transactionHash,
           blockNumber: event.blockNumber
         }));
+
+        if (address) {
+          return allBids.filter((bid) => bid.bidderAddress === address);
+        } else {
+          return allBids;
+        }
       } catch (e) {
         throw new Error(formatError(e));
       }
