@@ -1,5 +1,5 @@
 import { TransactionResponse } from '@ethersproject/providers';
-import { BigNumber, BigNumberish } from 'ethers';
+import { BigNumber, BigNumberish, FixedNumber } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
 import { Contract, NullAddress, Proofs } from '../../constants';
 import {
@@ -53,6 +53,14 @@ export interface LPDABid {
   quantity: number;
   transactionHash: string;
   blockNumber: number;
+}
+
+export interface LPDACashOut {
+  totalAmount: string;
+  curatorAmount: string;
+  fee: string;
+  feePercentage: string;
+  maxFee: string;
 }
 
 export function LPDAModule<TBase extends Constructor>(Base: TBase) {
@@ -213,6 +221,41 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       try {
         const refund = await this.lpdaContract.refundOwed(this.vaultAddress, address);
         return refund.toString();
+      } catch (e) {
+        throw new Error(formatError(e));
+      }
+    }
+
+    public async getCashOutInfo(): Promise<LPDACashOut> {
+      try {
+        const [auction, maxFee] = await Promise.all([
+          this.getAuction(),
+          this.lpdaContract.MAX_FEE()
+        ]);
+
+        const total = BigNumber.from(auction.minBid).mul(auction.numSold);
+        const min = BigNumber.from(auction.endPrice).mul(auction.numSold);
+
+        let feePercentage = maxFee;
+        if (!min.isZero()) {
+          const diff = total.sub(min);
+          feePercentage = diff.mul(1e4).div(min.mul(5)).add(250);
+          feePercentage = feePercentage.gt(maxFee) ? maxFee : feePercentage;
+        }
+
+        const fee = feePercentage.mul(total).div(1e4);
+        const curatorAmount = total.sub(fee);
+
+        return {
+          totalAmount: total.toString(),
+          curatorAmount: curatorAmount.toString(),
+          fee: fee.toString(),
+          maxFee: FixedNumber.from(maxFee).divUnsafe(FixedNumber.from(100)).round(2).toString(),
+          feePercentage: FixedNumber.from(feePercentage)
+            .divUnsafe(FixedNumber.from(100))
+            .round(2)
+            .toString()
+        };
       } catch (e) {
         throw new Error(formatError(e));
       }
