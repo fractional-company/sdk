@@ -1,6 +1,6 @@
 import { BigNumberish, Signer } from 'ethers';
 import { hexStripZeros, isAddress } from 'ethers/lib/utils';
-import { Chain, Contract, Proofs } from '../../constants';
+import { Chain, Contract, getProofs } from '../../constants';
 import { LPDA__factory as LPDAFactory } from '../../contracts';
 import { Connection, GasData } from '../../types/types';
 import {
@@ -26,14 +26,16 @@ export class VaultFactory {
   public chainId: Chain;
   public isReadOnly: boolean;
   public connection: Connection;
+  public modules?: string[];
 
-  constructor(connection: Connection, chainId: Chain) {
+  constructor(connection: Connection, chainId: Chain, modules?: string[]) {
     if (!isValidConnection(connection)) throw new Error('Invalid signer or provider');
     if (!isValidChain(chainId)) throw new Error('Invalid chain ID');
 
     this.chainId = chainId;
     this.connection = connection;
     this.isReadOnly = !Signer.isSigner(connection);
+    this.modules = modules;
   }
 
   public async deployArtEnjoyer({
@@ -60,7 +62,7 @@ export class VaultFactory {
     supply: BigNumberish;
   }): Promise<FactoryReceipt> {
     const contract = LPDAFactory.connect(
-      getContractAddress(Contract.LPDA, this.chainId),
+      getContractAddress(Contract.LPDA, this.chainId, this.modules),
       this.connection
     );
 
@@ -90,13 +92,13 @@ export class VaultFactory {
       curator
     ];
 
-    const lpdaModule = getContractAddress(Contract.LPDA, this.chainId);
-    const optimisticBidModule = getContractAddress(Contract.OptimisticBid, this.chainId);
+    const lpdaModule = getContractAddress(Contract.LPDA, this.chainId, this.modules);
+    const optimisticBidModule = getContractAddress(Contract.OptimisticBid, this.chainId, this.modules);
 
     const modules: string[] = [lpdaModule, optimisticBidModule];
     const plugins: string[] = [];
     const selectors: string[] = [];
-    const mintProof = Proofs[this.chainId].mintProof;
+    const mintProof = getProofs(this.chainId).mintProof;
 
     try {
       const tx = await executeTransaction({
@@ -140,14 +142,14 @@ export class VaultFactory {
         return await estimateTransactionGas({
           connection: this.connection,
           contract: LPDAFactory.connect(
-            getContractAddress(Contract.LPDA, this.chainId),
+            getContractAddress(Contract.LPDA, this.chainId, this.modules),
             this.connection
           ),
           method: 'deployVault',
           args: [
             [
-              getContractAddress(Contract.LPDA, this.chainId),
-              getContractAddress(Contract.OptimisticBid, this.chainId)
+              getContractAddress(Contract.LPDA, this.chainId, this.modules),
+              getContractAddress(Contract.OptimisticBid, this.chainId, this.modules)
             ],
             [],
             [],
@@ -165,7 +167,7 @@ export class VaultFactory {
             ],
             args.tokenAddress,
             args.tokenId,
-            Proofs[this.chainId].mintProof
+            getProofs(this.chainId).mintProof
           ]
         });
       } catch (e) {

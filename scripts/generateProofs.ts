@@ -3,8 +3,9 @@ import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import prettier from 'prettier';
-import { Chain, ContractAddresses } from '../src/';
+import { Chain, ContractAddresses, getContractAddress } from '../src/';
 import { LPDA__factory } from '../src/v2/contracts';
+import { Contract } from '../src';
 
 const { RPC_API_URL } = process.env;
 if (!RPC_API_URL) {
@@ -31,11 +32,12 @@ const generateProofs = async (
   batchWithdrawERC1155Proof: string[];
 }> => {
   // LPDA Contract
-  const lpdaAddress = ContractAddresses[chain].LPDA;
+  const lpdaAddress = getContractAddress(Contract.LPDA, chain);
+  const optimisticAddress = getContractAddress(Contract.OptimisticBid, chain);
   const lpda = LPDA__factory.connect(lpdaAddress, provider);
 
   // Merkle Tree
-  const modules = [ContractAddresses[chain].LPDA, ContractAddresses[chain].OPTIMISTIC_BID];
+  const modules = [lpdaAddress, optimisticAddress];
   const merkleTree = await lpda.generateMerkleTree(modules);
 
   const numberOfProofs = 7;

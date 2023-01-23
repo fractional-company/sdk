@@ -1,7 +1,7 @@
 import { TransactionResponse } from '@ethersproject/providers';
 import { BigNumber, BigNumberish, FixedNumber } from 'ethers';
 import { isAddress } from 'ethers/lib/utils';
-import { Contract, NullAddress, Proofs } from '../../constants';
+import { Contract, getProofs, NullAddress } from '../../constants';
 import {
   LPDA as LPDAInterface,
   LPDA__factory as LPDAFactory,
@@ -71,7 +71,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
     constructor(...args: any[]) {
       super(...args);
 
-      this.#address = getContractAddress(Contract.LPDA, this.chainId);
+      this.#address = getContractAddress(Contract.LPDA, this.chainId, this.modules);
       this.lpdaContract = LPDAFactory.connect(this.#address, this.connection);
     }
 
@@ -300,7 +300,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
           throw new Error('Only the curator can redeem the NFT');
         }
 
-        const { redeemProof } = Proofs[this.chainId];
+        const { redeemProof } = getProofs(this.chainId);
 
         return await executeTransaction({
           connection: this.connection,
@@ -335,7 +335,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
 
     public async settleAllAddresses(): Promise<TransactionResponse> {
       const multicallContract = MulticallFactory.connect(
-        getContractAddress(Contract.Multicall, this.chainId),
+        getContractAddress(Contract.Multicall, this.chainId, this.modules),
         this.connection
       );
 
@@ -448,7 +448,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       },
       redeemNFTCurator: async (tokenAddress: string, tokenId: BigNumberish) => {
         try {
-          const { redeemProof } = Proofs[this.chainId];
+          const { redeemProof } = getProofs(this.chainId);
 
           return await estimateTransactionGas({
             connection: this.connection,

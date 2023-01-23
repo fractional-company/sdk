@@ -16,22 +16,24 @@ import {
 export class FERC1155 {
   public chainId: Chain;
   public address: string;
+  public modules?: string[];
   public isReadOnly: boolean;
   public connection: Connection;
   public contract: FERC1155Interface;
 
-  constructor(connection: Connection, chainId: Chain) {
+  constructor(connection: Connection, chainId: Chain, modules?: string[]) {
     if (!isValidChain(chainId)) throw new Error('Invalid chain ID');
 
     this.chainId = chainId;
     this.connection = connection;
+    this.modules = modules;
     this.isReadOnly = !Signer.isSigner(this.connection);
 
-    this.address = getContractAddress(Contract.FERC1155, this.chainId);
+    this.address = getContractAddress(Contract.FERC1155, this.chainId, this.modules);
     this.contract = FERC1155Factory.connect(this.address, this.connection);
   }
 
-  // ======== Read Methods ========
+  // ======== Read Methods ========s
 
   public async balanceOf(owner: string, tokenId: BigNumberish): Promise<string> {
     if (!isAddress(owner)) {

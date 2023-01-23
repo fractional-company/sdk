@@ -10,10 +10,11 @@ export type Constructor<T = Vault> = new (...args: any[]) => T;
 export class Vault {
   public chainId: Chain;
   public vaultAddress: string;
+  public modules?: string[];
   public isReadOnly: boolean;
   public connection: Connection;
 
-  constructor(vaultAddress: string, connection: Connection, chainId: Chain) {
+  constructor(vaultAddress: string, connection: Connection, chainId: Chain, modules?: string[]) {
     if (!isAddress(vaultAddress)) throw new Error('Invalid vault address');
     if (!isValidConnection(connection)) throw new Error('Invalid signer or provider');
     if (!isValidChain(chainId)) throw new Error('Invalid chain ID');
@@ -22,13 +23,14 @@ export class Vault {
     this.chainId = chainId;
     this.connection = connection;
     this.isReadOnly = !Signer.isSigner(connection);
+    this.modules = modules;
   }
 
   public async getTokenInfo(): Promise<{
     tokenAddress: string;
     tokenId: string;
   }> {
-    const vaultRegistryAddress = getContractAddress(Contract.VaultRegistry, this.chainId);
+    const vaultRegistryAddress = getContractAddress(Contract.VaultRegistry, this.chainId, this.modules);
     const vaultRegistry = VaultRegistryFactory.connect(vaultRegistryAddress, this.connection);
     const info = await vaultRegistry.vaultToToken(this.vaultAddress);
 

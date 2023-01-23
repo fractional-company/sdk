@@ -1,7 +1,7 @@
 import { TransactionResponse } from '@ethersproject/abstract-provider';
 import { BigNumber, BigNumberish, BytesLike } from 'ethers';
 import { isAddress, parseEther } from 'ethers/lib/utils';
-import { Contract, NullAddress, Proofs, TokenStandard } from '../../constants';
+import { Contract, getProofs, NullAddress, TokenStandard } from '../../constants';
 import {
   OptimisticBid as OptimisticBidInterface,
   OptimisticBid__factory as OptimisticBidFactory
@@ -49,7 +49,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
     constructor(...args: any[]) {
       super(...args);
 
-      this.#address = getContractAddress(Contract.OptimisticBid, this.chainId);
+      this.#address = getContractAddress(Contract.OptimisticBid, this.chainId, this.modules);
       this.optimisticBidContract = OptimisticBidFactory.connect(this.#address, this.connection);
     }
 
@@ -211,7 +211,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         throw new Error('No rae balance');
       }
 
-      const { burnProof } = Proofs[this.chainId];
+      const { burnProof } = getProofs(this.chainId);
 
       return {
         connection: this.connection,
@@ -240,7 +240,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         throw new Error('Auction is not over');
       }
 
-      const { burnProof } = Proofs[this.chainId];
+      const { burnProof } = getProofs(this.chainId);
 
       return {
         connection: this.connection,
@@ -275,7 +275,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         throw new Error('Redeemer must own all the rae supply');
       }
 
-      const { burnProof } = Proofs[this.chainId];
+      const { burnProof } = getProofs(this.chainId);
 
       return {
         connection: this.connection,
@@ -474,8 +474,9 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
       userWallet?: Wallet
     ) {
       const wallet = userWallet || (await getCurrentWallet(this.connection));
-      const { withdrawERC20Proof, withdrawERC721Proof, batchWithdrawERC1155Proof } =
-        Proofs[this.chainId];
+      const { withdrawERC20Proof, withdrawERC721Proof, batchWithdrawERC1155Proof } = getProofs(
+        this.chainId
+      );
 
       // Each key is "tokenAddress_tokenReceiver"
       const erc1155Tokens: {
