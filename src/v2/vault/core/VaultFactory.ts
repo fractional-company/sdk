@@ -93,7 +93,11 @@ export class VaultFactory {
     ];
 
     const lpdaModule = getContractAddress(Contract.LPDA, this.chainId, this.modules);
-    const optimisticBidModule = getContractAddress(Contract.OptimisticBid, this.chainId, this.modules);
+    const optimisticBidModule = getContractAddress(
+      Contract.OptimisticBid,
+      this.chainId,
+      this.modules
+    );
 
     const modules: string[] = [lpdaModule, optimisticBidModule];
     const plugins: string[] = [];

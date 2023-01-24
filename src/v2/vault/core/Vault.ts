@@ -30,7 +30,11 @@ export class Vault {
     tokenAddress: string;
     tokenId: string;
   }> {
-    const vaultRegistryAddress = getContractAddress(Contract.VaultRegistry, this.chainId, this.modules);
+    const vaultRegistryAddress = getContractAddress(
+      Contract.VaultRegistry,
+      this.chainId,
+      this.modules
+    );
     const vaultRegistry = VaultRegistryFactory.connect(vaultRegistryAddress, this.connection);
     const info = await vaultRegistry.vaultToToken(this.vaultAddress);
 
