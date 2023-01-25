@@ -3,7 +3,7 @@ import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import prettier from 'prettier';
-import { Chain, ContractAddresses, getContractAddress } from '../src/';
+import { Chain, getContractAddress } from '../src/';
 import { LPDA__factory } from '../src/v2/contracts';
 import { Contract } from '../src';
 

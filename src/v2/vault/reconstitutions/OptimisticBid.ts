@@ -6,7 +6,7 @@ import {
   OptimisticBid as OptimisticBidInterface,
   OptimisticBid__factory as OptimisticBidFactory
 } from '../../contracts';
-import { FERC1155 } from '../../tokens/FERC1155';
+import { FERC1155 } from '../../tokens';
 import {
   Config,
   estimateTransactionGas,
@@ -205,7 +205,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
       const { tokenId } = await this.getTokenInfo();
       const wallet = await getCurrentWallet(this.connection);
 
-      const ferc1155 = new FERC1155(this.connection, this.chainId);
+      const ferc1155 = new FERC1155(this.connection, this.chainId, this.modules);
       const raeBalance = await ferc1155.balanceOf(wallet.address, tokenId);
       if (BigNumber.from(raeBalance).isZero()) {
         throw new Error('No rae balance');
@@ -268,7 +268,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
       const { tokenId } = await this.getTokenInfo();
       const wallet = await getCurrentWallet(this.connection);
 
-      const ferc1155 = new FERC1155(this.connection, this.chainId);
+      const ferc1155 = new FERC1155(this.connection, this.chainId, this.modules);
       const raeBalance = await ferc1155.balanceOf(wallet.address, tokenId);
       const totalSupply = await ferc1155.totalSupply(tokenId);
       if (!BigNumber.from(raeBalance).eq(totalSupply)) {
@@ -340,7 +340,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
       }
 
       const { tokenId } = await this.getTokenInfo();
-      const ferc1155 = new FERC1155(this.connection, this.chainId);
+      const ferc1155 = new FERC1155(this.connection, this.chainId, this.modules);
       const isApproved = await ferc1155.isApproved(wallet.address, this.#address, tokenId);
       if (!isApproved) {
         throw new Error('Must approve Optimistic Bid contract to transfer raes');
