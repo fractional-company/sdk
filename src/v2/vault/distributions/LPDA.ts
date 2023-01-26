@@ -300,7 +300,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
           throw new Error('Only the curator can redeem the NFT');
         }
 
-        const { redeemProof } = getProofs(this.chainId);
+        const { redeemProof } = getProofs(this.chainId, this.modules);
 
         return await executeTransaction({
           connection: this.connection,
@@ -448,7 +448,7 @@ export function LPDAModule<TBase extends Constructor>(Base: TBase) {
       },
       redeemNFTCurator: async (tokenAddress: string, tokenId: BigNumberish) => {
         try {
-          const { redeemProof } = getProofs(this.chainId);
+          const { redeemProof } = getProofs(this.chainId, this.modules);
 
           return await estimateTransactionGas({
             connection: this.connection,

@@ -102,7 +102,7 @@ export class VaultFactory {
     const modules: string[] = [lpdaModule, optimisticBidModule];
     const plugins: string[] = [];
     const selectors: string[] = [];
-    const mintProof = getProofs(this.chainId).mintProof;
+    const mintProof = getProofs(this.chainId, this.modules).mintProof;
 
     try {
       const tx = await executeTransaction({
@@ -171,7 +171,7 @@ export class VaultFactory {
             ],
             args.tokenAddress,
             args.tokenId,
-            getProofs(this.chainId).mintProof
+            getProofs(this.chainId, this.modules).mintProof
           ]
         });
       } catch (e) {

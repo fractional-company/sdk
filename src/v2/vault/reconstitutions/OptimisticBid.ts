@@ -211,7 +211,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         throw new Error('No rae balance');
       }
 
-      const { burnProof } = getProofs(this.chainId);
+      const { burnProof } = getProofs(this.chainId, this.modules);
 
       return {
         connection: this.connection,
@@ -240,7 +240,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         throw new Error('Auction is not over');
       }
 
-      const { burnProof } = getProofs(this.chainId);
+      const { burnProof } = getProofs(this.chainId, this.modules);
 
       return {
         connection: this.connection,
@@ -275,7 +275,7 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
         throw new Error('Redeemer must own all the rae supply');
       }
 
-      const { burnProof } = getProofs(this.chainId);
+      const { burnProof } = getProofs(this.chainId, this.modules);
 
       return {
         connection: this.connection,
@@ -475,7 +475,8 @@ export function OptimisticBidModule<TBase extends Constructor>(Base: TBase) {
     ) {
       const wallet = userWallet || (await getCurrentWallet(this.connection));
       const { withdrawERC20Proof, withdrawERC721Proof, batchWithdrawERC1155Proof } = getProofs(
-        this.chainId
+        this.chainId,
+        this.modules
       );
 
       // Each key is "tokenAddress_tokenReceiver"
